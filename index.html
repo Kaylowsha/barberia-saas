@@ -166,62 +166,72 @@
         let currentBarberia = null;
         let userRole = null;
         
-        // ===============================
-        // FUNCIONES DE AUTENTICACIÓN
-        // ===============================
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            
-            showLoading();
-            hideError();
-            
-            try {
-                // Por ahora usaremos una autenticación simulada
-                // Verificar si el usuario existe en nuestra tabla
-                const { data: userData, error: userError } = await supabase
-                    .from('usuarios')
-                    .select('*, barberias(*)')
-                    .eq('email', email)
-                    .single();
-                
-                if (userError || !userData) {
-                    showError('Usuario no encontrado. Verifica tu email.');
-                    hideLoading();
-                    return;
+     // ===============================
+// FUNCIONES DE AUTENTICACIÓN
+// ===============================
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    
+    showLoading();
+    hideError();
+    
+    try {
+        // LOGIN TEMPORAL - Sin verificación real
+        // Simulamos los datos del usuario basado en el email
+        let userData = null;
+        
+        if (email === 'israelparancan.n@gmail.com') {
+            userData = {
+                id: '3fbc31cc-da0a-4f4a-b45b-e7a51320c92c',
+                email: email,
+                nombre: 'Administrador',
+                role: 'admin',
+                barberia_id: '79da96ae-4357-4ede-8c98-9a61c1c3378e',
+                barberias: {
+                    id: '79da96ae-4357-4ede-8c98-9a61c1c3378e',
+                    nombre: 'NatWin',
+                    plan: 'trial'
                 }
-                
-                // Verificar estado del trial
-                const { data: trialStatus } = await supabase
-                    .rpc('verificar_estado_trial', { 
-                        p_barberia_id: userData.barberia_id 
-                    });
-                
-                if (trialStatus && !trialStatus[0].activa) {
-                    showError('Tu período de prueba ha terminado. Contacta al administrador.');
-                    hideLoading();
-                    return;
+            };
+        } else if (email === 'ispn4trade@gmail.com') {
+            userData = {
+                id: '1a0242b8-bc7a-4e61-9e33-ac182996a950',
+                email: email,
+                nombre: 'Misho',
+                role: 'empleado',
+                barberia_id: '79da96ae-4357-4ede-8c98-9a61c1c3378e',
+                barberias: {
+                    id: '79da96ae-4357-4ede-8c98-9a61c1c3378e',
+                    nombre: 'NatWin',
+                    plan: 'trial'
                 }
-                
-                // Login exitoso
-                currentUser = userData;
-                currentBarberia = userData.barberias;
-                userRole = userData.role;
-                
-                localStorage.setItem('currentUser', JSON.stringify(currentUser));
-                localStorage.setItem('userRole', userRole);
-                
-                initializeApp();
-                
-            } catch (error) {
-                console.error('Error:', error);
-                showError('Error al iniciar sesión. Intenta nuevamente.');
-            }
-            
+            };
+        } else {
+            showError('Usuario no encontrado. Usa uno de los emails de prueba.');
             hideLoading();
-        });
+            return;
+        }
+        
+        // Login exitoso
+        currentUser = userData;
+        currentBarberia = userData.barberias;
+        userRole = userData.role;
+        
+        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        localStorage.setItem('userRole', userRole);
+        
+        initializeApp();
+        
+    } catch (error) {
+        console.error('Error:', error);
+        showError('Error al iniciar sesión. Intenta nuevamente.');
+    }
+    
+    hideLoading();
+});
         
         function showError(message) {
             const errorDiv = document.getElementById('loginError');
@@ -266,6 +276,8 @@
         }
         
         async function checkTrialStatus() {
+            // Temporalmente deshabilitado hasta configurar auth
+    /*
             if (!currentBarberia) return;
             
             const { data: trialStatus } = await supabase
@@ -279,7 +291,14 @@
                 document.getElementById('trialMessage').textContent = 
                     `Período de prueba: ${dias} días restantes. Contacta al administrador para continuar.`;
             }
-        }
+            */
+             // Mostrar mensaje temporal
+    if (currentBarberia && currentBarberia.plan === 'trial') {
+        document.getElementById('trialAlert').classList.remove('hidden');
+        document.getElementById('trialMessage').textContent = 
+            `Período de prueba activo. 15 días restantes.`;
+    }
+        } 
         
         // ===============================
         // GENERACIÓN DE TABS
@@ -429,21 +448,29 @@
         }
         
         async function loadServiciosDropdown() {
-            const { data: servicios } = await supabase
-                .from('servicios')
-                .select('*')
-                .eq('barberia_id', currentBarberia.id)
-                .eq('activo', true);
-            
-            if (servicios) {
-                const options = servicios.map(s => 
-                    `<option value="${s.id}" data-precio="${s.precio_sugerido}">${s.nombre}</option>`
-                ).join('');
-                
-                document.getElementById('servicioPrincipal').innerHTML += options;
-                document.getElementById('servicioAdicional').innerHTML += options;
-            }
-        }
+    // Temporalmente usar servicios hardcodeados
+    const servicios = [
+        { id: 1, nombre: 'Corte Tradicional - Estudiante', precio_sugerido: 12000 },
+        { id: 2, nombre: 'Corte Tijera', precio_sugerido: 15000 },
+        { id: 3, nombre: 'Fade - Degradados', precio_sugerido: 18000 },
+        { id: 4, nombre: 'Barba Rasurado', precio_sugerido: 8000 },
+        { id: 5, nombre: 'Perfilado Barba', precio_sugerido: 10000 },
+        { id: 6, nombre: 'Barba Premium', precio_sugerido: 12000 },
+        { id: 7, nombre: 'Rasurado de Barba con Vapor', precio_sugerido: 15000 },
+        { id: 8, nombre: 'Limpieza Facial Premium', precio_sugerido: 20000 },
+        { id: 9, nombre: 'Servicio Full', precio_sugerido: 35000 },
+        { id: 10, nombre: 'Cejas', precio_sugerido: 5000 },
+        { id: 11, nombre: 'Diseños', precio_sugerido: 8000 },
+        { id: 12, nombre: 'Líneas', precio_sugerido: 5000 }
+    ];
+    
+    const options = servicios.map(s => 
+        `<option value="${s.id}" data-precio="${s.precio_sugerido}">${s.nombre}</option>`
+    ).join('');
+    
+    document.getElementById('servicioPrincipal').innerHTML += options;
+    document.getElementById('servicioAdicional').innerHTML += options;
+}
         
         async function registrarServicio(e) {
             e.preventDefault();
