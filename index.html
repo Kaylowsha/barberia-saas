@@ -10,6 +10,8 @@
     
     <!-- Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Configuración -->
+<script src="config.js"></script>
     
     <!-- Font Awesome para iconos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -157,8 +159,8 @@
         // ===============================
         // CONFIGURACIÓN DE SUPABASE
         // ===============================
-        const SUPABASE_URL = 'https://tlireovgyvnsomovncji.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRsaXJlb3ZneXZuc29tb3ZuY2ppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2MDYzODksImV4cCI6MjA3MzE4MjM4OX0.7d4WaX-bxlAFJCLS6cPhCOFONsSZxX7Oc0153Dpjrl0';
+        const SUPABASE_URL = SUPABASE_CONFIG.url;
+const SUPABASE_ANON_KEY = SUPABASE_CONFIG.anonKey;
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         
         // Variables globales
