@@ -475,9 +475,61 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
 }
         
         async function registrarServicio(e) {
-            e.preventDefault();
-            
-            showLoading();
+    e.preventDefault();
+    
+    showLoading();
+    
+    const servicioPrincipal = document.getElementById('servicioPrincipal');
+    const servicioAdicional = document.getElementById('servicioAdicional');
+    const monto = document.getElementById('monto').value;
+    const formaPago = document.getElementById('formaPago').value;
+    const notas = document.getElementById('notas').value;
+    
+    // Validaciones
+    if (!servicioPrincipal.value || !monto || !formaPago) {
+        alert('Por favor completa todos los campos obligatorios');
+        hideLoading();
+        return;
+    }
+    
+    try {
+        // Para desarrollo, guardamos directamente sin auth
+        const nuevoServicio = {
+            barberia_id: SUPABASE_CONFIG.barberiaId,
+            realizado_por_id: currentUser.id,
+            realizado_por_nombre: currentUser.nombre,
+            servicio_principal_id: parseInt(servicioPrincipal.value),
+            servicio_principal_nombre: servicioPrincipal.options[servicioPrincipal.selectedIndex].text,
+            servicio_adicional_id: servicioAdicional.value ? parseInt(servicioAdicional.value) : null,
+            servicio_adicional_nombre: servicioAdicional.value ? servicioAdicional.options[servicioAdicional.selectedIndex].text : null,
+            monto_total: parseFloat(monto),
+            forma_pago: formaPago,
+            notas: notas || null,
+            fecha: new Date().toISOString().split('T')[0]
+        };
+        
+        console.log('Guardando servicio:', nuevoServicio);
+        
+        const { data, error } = await supabase
+            .from('citas')
+            .insert([nuevoServicio])
+            .select();
+        
+        if (error) {
+            console.error('Error de Supabase:', error);
+            alert('Error al guardar: ' + error.message);
+        } else {
+            alert('✅ Servicio registrado exitosamente! Código: #' + (data[0].codigo_diario || data[0].id));
+            document.getElementById('registroForm').reset();
+        }
+        
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al registrar el servicio: ' + error.message);
+    }
+    
+    hideLoading();
+}
             
             // Aquí iría la lógica para guardar en Supabase
             const servicioPrincipal = document.getElementById('servicioPrincipal');
