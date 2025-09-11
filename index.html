@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Barbería SaaS - Sistema de Gestión</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- Font Awesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* Animaciones personalizadas */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Pantalla de Login -->
+    <div id="loginScreen" class="min-h-screen flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl p-8 max-w-md w-full fade-in">
+            <div class="text-center mb-8">
+                <i class="fas fa-cut text-6xl text-blue-600 mb-4"></i>
+                <h1 class="text-3xl font-bold text-gray-800">Barbería SaaS</h1>
+                <p class="text-gray-600 mt-2">Sistema de Gestión Profesional</p>
+            </div>
+            
+            <form id="loginForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-envelope mr-2"></i>Email
+                    </label>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="tu@email.com"
+                        required
+                    >
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-lock mr-2"></i>Contraseña
+                    </label>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="••••••••"
+                        required
+                    >
+                </div>
+                
+                <button 
+                    type="submit" 
+                    class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition duration-200"
+                >
+                    <i class="fas fa-sign-in-alt mr-2"></i>Iniciar Sesión
+                </button>
+            </form>
+            
+            <div id="loginError" class="mt-4 p-3 bg-red-100 text-red-700 rounded-lg hidden">
+                <i class="fas fa-exclamation-circle mr-2"></i>
+                <span id="loginErrorText"></span>
+            </div>
+            
+            <div class="mt-6 text-center text-sm text-gray-600">
+                <p>¿Primera vez? Contacta al administrador</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Pantalla Principal (oculta inicialmente) -->
+    <div id="mainApp" class="hidden">
+        <!-- Barra de Navegación -->
+        <nav class="bg-white shadow-lg">
+            <div class="max-w-7xl mx-auto px-4">
+                <div class="flex justify-between items-center h-16">
+                    <div class="flex items-center">
+                        <i class="fas fa-cut text-2xl text-blue-600 mr-3"></i>
+                        <span class="font-bold text-xl">Barbería SaaS</span>
+                        <span id="barberiaName" class="ml-4 text-gray-600"></span>
+                    </div>
+                    
+                    <div class="flex items-center space-x-4">
+                        <span id="userName" class="text-gray-700"></span>
+                        <span id="userRole" class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm"></span>
+                        <button onclick="logout()" class="text-red-600 hover:text-red-800">
+                            <i class="fas fa-sign-out-alt"></i> Salir
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+        
+        <!-- Alerta de Trial -->
+        <div id="trialAlert" class="hidden bg-yellow-100 border-l-4 border-yellow-500 p-4">
+            <div class="flex items-center">
+                <i class="fas fa-exclamation-triangle text-yellow-700 mr-3"></i>
+                <p id="trialMessage" class="text-yellow-700"></p>
+            </div>
+        </div>
+        
+        <!-- Tabs de Navegación -->
+        <div class="bg-white border-b">
+            <div class="max-w-7xl mx-auto px-4">
+                <div class="flex space-x-1 overflow-x-auto py-2" id="tabContainer">
+                    <!-- Los tabs se generarán dinámicamente según el rol -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Contenido Principal -->
+        <div class="max-w-7xl mx-auto px-4 py-6">
+            <div id="contentArea" class="bg-white rounded-lg shadow p-6">
+                <!-- El contenido se cargará dinámicamente -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Loading Spinner -->
+    <div id="loadingSpinner" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-lg">
+            <div class="loading-spinner mx-auto"></div>
+            <p class="mt-4 text-gray-600">Cargando...</p>
+        </div>
+    </div>
+    
+    <!-- Script Principal -->
+    <script>
+        // ===============================
+        // CONFIGURACIÓN DE SUPABASE
+        // ===============================
+        const SUPABASE_URL = 'https://tlireovgyvnsomovncji.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRsaXJlb3ZneXZuc29tb3ZuY2ppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2MDYzODksImV4cCI6MjA3MzE4MjM4OX0.7d4WaX-bxlAFJCLS6cPhCOFONsSZxX7Oc0153Dpjrl0';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        // Variables globales
+        let currentUser = null;
+        let currentBarberia = null;
+        let userRole = null;
+        
+        // ===============================
+        // FUNCIONES DE AUTENTICACIÓN
+        // ===============================
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            showLoading();
+            hideError();
+            
+            try {
+                // Por ahora usaremos una autenticación simulada
+                // Verificar si el usuario existe en nuestra tabla
+                const { data: userData, error: userError } = await supabase
+                    .from('usuarios')
+                    .select('*, barberias(*)')
+                    .eq('email', email)
+                    .single();
+                
+                if (userError || !userData) {
+                    showError('Usuario no encontrado. Verifica tu email.');
+                    hideLoading();
+                    return;
+                }
+                
+                // Verificar estado del trial
+                const { data: trialStatus } = await supabase
+                    .rpc('verificar_estado_trial', { 
+                        p_barberia_id: userData.barberia_id 
+                    });
+                
+                if (trialStatus && !trialStatus[0].activa) {
+                    showError('Tu período de prueba ha terminado. Contacta al administrador.');
+                    hideLoading();
+                    return;
+                }
+                
+                // Login exitoso
+                currentUser = userData;
+                currentBarberia = userData.barberias;
+                userRole = userData.role;
+                
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                localStorage.setItem('userRole', userRole);
+                
+                initializeApp();
+                
+            } catch (error) {
+                console.error('Error:', error);
+                showError('Error al iniciar sesión. Intenta nuevamente.');
+            }
+            
+            hideLoading();
+        });
+        
+        function showError(message) {
+            const errorDiv = document.getElementById('loginError');
+            const errorText = document.getElementById('loginErrorText');
+            errorText.textContent = message;
+            errorDiv.classList.remove('hidden');
+        }
+        
+        function hideError() {
+            document.getElementById('loginError').classList.add('hidden');
+        }
+        
+        function showLoading() {
+            document.getElementById('loadingSpinner').classList.remove('hidden');
+        }
+        
+        function hideLoading() {
+            document.getElementById('loadingSpinner').classList.add('hidden');
+        }
+        
+        // ===============================
+        // INICIALIZACIÓN DE LA APP
+        // ===============================
+        function initializeApp() {
+            // Ocultar login, mostrar app
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+            
+            // Actualizar información del usuario
+            document.getElementById('userName').textContent = currentUser.nombre;
+            document.getElementById('userRole').textContent = userRole === 'admin' ? 'Administrador' : 'Empleado';
+            document.getElementById('barberiaName').textContent = currentBarberia ? currentBarberia.nombre : '';
+            
+            // Verificar y mostrar alerta de trial si aplica
+            checkTrialStatus();
+            
+            // Generar tabs según el rol
+            generateTabs();
+            
+            // Cargar la primera pestaña
+            loadTab('registrar');
+        }
+        
+        async function checkTrialStatus() {
+            if (!currentBarberia) return;
+            
+            const { data: trialStatus } = await supabase
+                .rpc('verificar_estado_trial', { 
+                    p_barberia_id: currentBarberia.id 
+                });
+            
+            if (trialStatus && trialStatus[0].plan === 'trial') {
+                const dias = trialStatus[0].dias_restantes;
+                document.getElementById('trialAlert').classList.remove('hidden');
+                document.getElementById('trialMessage').textContent = 
+                    `Período de prueba: ${dias} días restantes. Contacta al administrador para continuar.`;
+            }
+        }
+        
+        // ===============================
+        // GENERACIÓN DE TABS
+        // ===============================
+        function generateTabs() {
+            const tabContainer = document.getElementById('tabContainer');
+            const tabs = [];
+            
+            // Tabs comunes para todos
+            tabs.push(
+                { id: 'registrar', label: 'Registrar Servicio', icon: 'fa-plus-circle' },
+                { id: 'resumen', label: 'Resumen', icon: 'fa-chart-bar' },
+                { id: 'servicios', label: 'Servicios', icon: 'fa-list' }
+            );
+            
+            // Tabs exclusivos del admin
+            if (userRole === 'admin') {
+                tabs.push(
+                    { id: 'barberos', label: 'Gestión Barberos', icon: 'fa-users' },
+                    { id: 'cierre', label: 'Cierre de Caja', icon: 'fa-cash-register' },
+                    { id: 'estadisticas', label: 'Estadísticas', icon: 'fa-chart-line' }
+                );
+            }
+            
+            // Generar HTML de tabs
+            tabContainer.innerHTML = tabs.map(tab => `
+                <button 
+                    onclick="loadTab('${tab.id}')"
+                    id="tab-${tab.id}"
+                    class="px-4 py-2 rounded-t-lg font-medium text-gray-600 hover:text-blue-600 hover:bg-gray-50 transition-colors tab-button"
+                >
+                    <i class="fas ${tab.icon} mr-2"></i>${tab.label}
+                </button>
+            `).join('');
+        }
+        
+        // ===============================
+        // NAVEGACIÓN ENTRE TABS
+        // ===============================
+        function loadTab(tabId) {
+            // Actualizar estado visual de tabs
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('bg-blue-600', 'text-white');
+                btn.classList.add('text-gray-600');
+            });
+            
+            const activeTab = document.getElementById(`tab-${tabId}`);
+            if (activeTab) {
+                activeTab.classList.remove('text-gray-600');
+                activeTab.classList.add('bg-blue-600', 'text-white');
+            }
+            
+            // Cargar contenido según el tab
+            const contentArea = document.getElementById('contentArea');
+            
+            switch(tabId) {
+                case 'registrar':
+                    loadRegistrarServicio();
+                    break;
+                case 'resumen':
+                    loadResumen();
+                    break;
+                case 'servicios':
+                    loadServicios();
+                    break;
+                case 'barberos':
+                    loadGestionBarberos();
+                    break;
+                case 'cierre':
+                    loadCierreCaja();
+                    break;
+                case 'estadisticas':
+                    loadEstadisticas();
+                    break;
+                default:
+                    contentArea.innerHTML = '<p>Sección en desarrollo...</p>';
+            }
+        }
+        
+        // ===============================
+        // CONTENIDO DE CADA TAB
+        // ===============================
+        function loadRegistrarServicio() {
+            document.getElementById('contentArea').innerHTML = `
+                <div class="max-w-2xl mx-auto">
+                    <h2 class="text-2xl font-bold mb-6">
+                        <i class="fas fa-plus-circle mr-2"></i>Registrar Nuevo Servicio
+                    </h2>
+                    
+                    <form id="registroForm" class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Servicio Principal *
+                            </label>
+                            <select id="servicioPrincipal" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required>
+                                <option value="">Selecciona un servicio...</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Servicio Adicional (opcional)
+                            </label>
+                            <select id="servicioAdicional" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                <option value="">Ninguno</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Monto Cobrado *
+                            </label>
+                            <input type="number" id="monto" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="$" required>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Forma de Pago *
+                            </label>
+                            <select id="formaPago" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required>
+                                <option value="">Selecciona...</option>
+                                <option value="Efectivo">Efectivo</option>
+                                <option value="Cuenta RUT">Cuenta RUT</option>
+                                <option value="Mercado Pago">Mercado Pago</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Notas (opcional)
+                            </label>
+                            <textarea id="notas" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Observaciones adicionales..."></textarea>
+                        </div>
+                        
+                        <button type="submit" class="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition duration-200">
+                            <i class="fas fa-save mr-2"></i>Registrar Servicio
+                        </button>
+                    </form>
+                </div>
+            `;
+            
+            // Cargar servicios disponibles
+            loadServiciosDropdown();
+            
+            // Agregar evento al formulario
+            document.getElementById('registroForm').addEventListener('submit', registrarServicio);
+        }
+        
+        async function loadServiciosDropdown() {
+            const { data: servicios } = await supabase
+                .from('servicios')
+                .select('*')
+                .eq('barberia_id', currentBarberia.id)
+                .eq('activo', true);
+            
+            if (servicios) {
+                const options = servicios.map(s => 
+                    `<option value="${s.id}" data-precio="${s.precio_sugerido}">${s.nombre}</option>`
+                ).join('');
+                
+                document.getElementById('servicioPrincipal').innerHTML += options;
+                document.getElementById('servicioAdicional').innerHTML += options;
+            }
+        }
+        
+        async function registrarServicio(e) {
+            e.preventDefault();
+            
+            showLoading();
+            
+            // Aquí iría la lógica para guardar en Supabase
+            const servicioPrincipal = document.getElementById('servicioPrincipal');
+            const servicioAdicional = document.getElementById('servicioAdicional');
+            const monto = document.getElementById('monto').value;
+            const formaPago = document.getElementById('formaPago').value;
+            const notas = document.getElementById('notas').value;
+            
+            try {
+                const { data, error } = await supabase
+                    .from('citas')
+                    .insert({
+                        barberia_id: currentBarberia.id,
+                        realizado_por_id: currentUser.id,
+                        realizado_por_nombre: currentUser.nombre,
+                        servicio_principal_id: servicioPrincipal.value,
+                        servicio_principal_nombre: servicioPrincipal.options[servicioPrincipal.selectedIndex].text,
+                        servicio_adicional_id: servicioAdicional.value || null,
+                        servicio_adicional_nombre: servicioAdicional.value ? servicioAdicional.options[servicioAdicional.selectedIndex].text : null,
+                        monto_total: monto,
+                        forma_pago: formaPago,
+                        notas: notas || null
+                    });
+                
+                if (error) throw error;
+                
+                alert('Servicio registrado exitosamente!');
+                document.getElementById('registroForm').reset();
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al registrar el servicio');
+            }
+            
+            hideLoading();
+        }
+        
+        function loadResumen() {
+            document.getElementById('contentArea').innerHTML = `
+                <h2 class="text-2xl font-bold mb-6">
+                    <i class="fas fa-chart-bar mr-2"></i>Resumen
+                </h2>
+                <p class="text-gray-600">Selecciona el período para ver el resumen...</p>
+                <!-- Aquí iría el contenido del resumen -->
+            `;
+        }
+        
+        function loadServicios() {
+            document.getElementById('contentArea').innerHTML = `
+                <h2 class="text-2xl font-bold mb-6">
+                    <i class="fas fa-list mr-2"></i>Lista de Servicios
+                </h2>
+                <p class="text-gray-600">Aquí se mostrarán los servicios realizados...</p>
+                <!-- Aquí iría la lista de servicios -->
+            `;
+        }
+        
+        function loadGestionBarberos() {
+            if (userRole !== 'admin') {
+                document.getElementById('contentArea').innerHTML = `
+                    <p class="text-red-600">No tienes permisos para ver esta sección.</p>
+                `;
+                return;
+            }
+            
+            document.getElementById('contentArea').innerHTML = `
+                <h2 class="text-2xl font-bold mb-6">
+                    <i class="fas fa-users mr-2"></i>Gestión de Barberos
+                </h2>
+                <p class="text-gray-600">Administra los barberos y adelantos...</p>
+                <!-- Aquí iría el contenido de gestión -->
+            `;
+        }
+        
+        function loadCierreCaja() {
+            if (userRole !== 'admin') {
+                document.getElementById('contentArea').innerHTML = `
+                    <p class="text-red-600">No tienes permisos para ver esta sección.</p>
+                `;
+                return;
+            }
+            
+            document.getElementById('contentArea').innerHTML = `
+                <h2 class="text-2xl font-bold mb-6">
+                    <i class="fas fa-cash-register mr-2"></i>Cierre de Caja
+                </h2>
+                <p class="text-gray-600">Realiza el cierre de caja...</p>
+                <!-- Aquí iría el contenido del cierre -->
+            `;
+        }
+        
+        function loadEstadisticas() {
+            if (userRole !== 'admin') {
+                document.getElementById('contentArea').innerHTML = `
+                    <p class="text-red-600">No tienes permisos para ver esta sección.</p>
+                `;
+                return;
+            }
+            
+            document.getElementById('contentArea').innerHTML = `
+                <h2 class="text-2xl font-bold mb-6">
+                    <i class="fas fa-chart-line mr-2"></i>Estadísticas
+                </h2>
+                <p class="text-gray-600">Visualiza las estadísticas del negocio...</p>
+                <!-- Aquí irían los gráficos y estadísticas -->
+            `;
+        }
+        
+        // ===============================
+        // LOGOUT
+        // ===============================
+        function logout() {
+            localStorage.removeItem('currentUser');
+            localStorage.removeItem('userRole');
+            location.reload();
+        }
+        
+        // ===============================
+        // VERIFICAR SESIÓN AL CARGAR
+        // ===============================
+        window.addEventListener('load', () => {
+            const savedUser = localStorage.getItem('currentUser');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                userRole = localStorage.getItem('userRole');
+                
+                // Aquí deberías verificar que el usuario sigue siendo válido
+                // Por ahora, simplemente inicializamos la app
+                initializeApp();
+            }
+        });
+    </script>
+</body>
+</html>
