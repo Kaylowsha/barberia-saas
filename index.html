@@ -1400,35 +1400,29 @@ async function limpiarSemanaAdelantos() {
         finSemana.setDate(inicioSemana.getDate() + 6);
         finSemana.setHours(23, 59, 59, 999);
         
+        console.log('📅 Limpiando adelantos de:', inicioSemana.toISOString(), 'a', finSemana.toISOString());
+        
         // Marcar como inactivos los adelantos de esta semana
-        const { error } = await supabase
+        const { data, error } = await supabase
             .from('adelantos')
             .update({ activo: false })
             .eq('barberia_id', SUPABASE_CONFIG.barberiaId)
             .eq('activo', true)
             .gte('created_at', inicioSemana.toISOString())
-            .lte('created_at', finSemana.toISOString());
+            .lte('created_at', finSemana.toISOString())
+            .select(); // Agregamos select para ver qué se actualizó
         
         if (error) {
             console.error('❌ Error limpiando adelantos:', error);
             alert(`❌ Error al limpiar adelantos: ${error.message}`);
         } else {
-            alert('✅ Adelantos de la semana limpiados correctamente');
+            console.log('✅ Adelantos actualizados:', data);
+            alert(`✅ Adelantos de la semana limpiados correctamente (${data ? data.length : 0} registros)`);
             
-            // Verificar si estamos en la pestaña de gestión antes de actualizar
-            const contenedorAdelantos = document.querySelector('.adelantos-resumen');
-            if (contenedorAdelantos) {
-                // Si existe el contenedor, actualizar la vista
-                await cargarResumenAdelantos();
-            } else {
-                console.log('📋 Vista de adelantos no disponible, limpieza completada');
-            }
-            
-            // Si estamos en la pestaña de Resumen, actualizar también
-            const vistaResumen = document.getElementById('contenidoResumen');
-            if (vistaResumen) {
-                cargarDatosResumen();
-            }
+            // Forzar recarga de la página para actualizar todas las vistas
+            setTimeout(() => {
+                location.reload();
+            }, 500);
         }
         
     } catch (error) {
