@@ -2412,6 +2412,176 @@ async function filtrarProductividad(periodo) {
         `;
     }
 }
+        async function filtrarTendencia(periodo) {
+    console.log(`📅 Filtrando tendencia por: ${periodo}`);
+    
+    // Actualizar estado visual de botones
+    document.querySelectorAll('.filtro-tendencia-btn').forEach(btn => {
+        btn.classList.remove('filtro-tendencia-activo', 'bg-blue-600', 'text-white');
+        btn.classList.add('bg-gray-200', 'text-gray-700');
+    });
+    
+    const btnActivo = document.getElementById(`btn-tend-${periodo}`);
+    if (btnActivo) {
+        btnActivo.classList.add('filtro-tendencia-activo', 'bg-blue-600', 'text-white');
+        btnActivo.classList.remove('bg-gray-200', 'text-gray-700');
+    }
+    
+    // Mostrar loading
+    const container = document.getElementById('graficoTendencia');
+    container.innerHTML = `
+        <div class="text-center py-4">
+            <div class="loading-spinner mx-auto"></div>
+            <p class="mt-2 text-gray-600">Analizando ${periodo === '7d' ? '7 días' : periodo === '30d' ? '30 días' : periodo === '3m' ? '3 meses' : periodo === '1y' ? '1 año' : 'todos los datos'}...</p>
+        </div>
+    `;
+    
+    try {
+        // Calcular fechas según el período
+        const hoy = new Date();
+        let fechaInicio;
+        
+        switch(periodo) {
+            case '7d':
+                fechaInicio = new Date();
+                fechaInicio.setDate(hoy.getDate() - 7);
+                break;
+            case '30d':
+                fechaInicio = new Date();
+                fechaInicio.setDate(hoy.getDate() - 30);
+                break;
+            case '3m':
+                fechaInicio = new Date();
+                fechaInicio.setMonth(hoy.getMonth() - 3);
+                break;
+            case '1y':
+                fechaInicio = new Date();
+                fechaInicio.setFullYear(hoy.getFullYear() - 1);
+                break;
+            case 'todo':
+                fechaInicio = new Date('2020-01-01'); // Fecha muy antigua
+                break;
+        }
+        
+        const fechaFin = hoy.toISOString().split('T')[0];
+        const fechaInicioStr = fechaInicio.toISOString().split('T')[0];
+        
+        console.log(`📅 Consultando tendencia desde ${fechaInicioStr} hasta ${fechaFin}`);
+        
+        // Cargar servicios del período
+        const { data: servicios, error } = await supabase
+            .from('citas')
+            .select('fecha, monto_total')
+            .eq('barberia_id', SUPABASE_CONFIG.barberiaId)
+            .gte('fecha', fechaInicioStr)
+            .lte('fecha', fechaFin)
+            .order('fecha', { ascending: true });
+        
+        if (error) throw error;
+        
+        if (!servicios || servicios.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-8 text-gray-500">
+                    <div class="text-4xl mb-2">📅</div>
+                    <p>No hay ingresos registrados en ${periodo === '7d' ? 'los últimos 7 días' : periodo === '30d' ? 'los últimos 30 días' : periodo === '3m' ? 'los últimos 3 meses' : periodo === '1y' ? 'el último año' : 'el histórico'}</p>
+                </div>
+            `;
+            return;
+        }
+        
+        // Procesar datos por día
+        const porDia = {};
+        servicios.forEach(s => {
+            const fecha = s.fecha;
+            if (!porDia[fecha]) {
+                porDia[fecha] = { servicios: 0, monto: 0 };
+            }
+            porDia[fecha].servicios++;
+            porDia[fecha].monto += parseFloat(s.monto_total || 0);
+        });
+        
+        // Convertir a array y ordenar por fecha
+        const dias = Object.entries(porDia)
+            .sort(([a], [b]) => a.localeCompare(b))
+            .map(([fecha, data]) => ({
+                fecha,
+                dia: new Date(fecha + 'T00:00:00').toLocaleDateString('es-CL', { 
+                    weekday: 'short', 
+                    day: 'numeric',
+                    month: 'short'
+                }),
+                servicios: data.servicios,
+                monto: data.monto
+            }));
+        
+        if (dias.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-8 text-gray-500">
+                    <p>No hay datos suficientes para mostrar tendencias</p>
+                </div>
+            `;
+            return;
+        }
+        
+        // Generar gráfico de barras por día
+        const maxMonto = Math.max(...dias.map(d => d.monto));
+        
+        let html = '<div class="space-y-2">';
+        dias.forEach(dia => {
+            const altura = maxMonto > 0 ? Math.round((dia.monto / maxMonto) * 100) : 0;
+            const intensidad = altura > 80 ? 'from-red-400 to-red-600' : 
+                              altura > 60 ? 'from-orange-400 to-orange-600' :
+                              altura > 40 ? 'from-yellow-400 to-yellow-600' : 
+                              altura > 20 ? 'from-green-400 to-green-600' : 'from-gray-400 to-gray-500';
+            
+            const montoK = dia.monto >= 1000 ? `$${Math.round(dia.monto/1000)}k` : `$${Math.round(dia.monto)}`;
+            
+            html += `
+                <div class="flex items-center space-x-3">
+                    <div class="w-20 text-sm font-medium text-gray-700 text-right">${dia.dia}</div>
+                    <div class="flex-1 bg-gray-200 rounded-full h-8 relative min-w-0">
+                        <div class="bg-gradient-to-r ${intensidad} h-8 rounded-full transition-all duration-1000 min-w-max" style="width: ${Math.max(altura, 15)}%"></div>
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <span class="text-xs font-bold text-white px-2">${dia.servicios} serv - ${montoK}</span>
+                        </div>
+                    </div>
+                    <div class="w-24 text-right text-sm font-semibold text-gray-800">
+                        $${dia.monto.toLocaleString('es-CL')}
+                    </div>
+                </div>
+            `;
+        });
+        html += '</div>';
+        
+        // Agregar resumen del período
+        const totalDias = dias.length;
+        const totalMonto = dias.reduce((sum, d) => sum + d.monto, 0);
+        const totalServicios = dias.reduce((sum, d) => sum + d.servicios, 0);
+        const promedioDiario = Math.round(totalMonto / totalDias);
+        
+        html += `
+            <div class="mt-4 pt-4 border-t border-gray-200">
+                <div class="text-xs text-gray-500 text-center">
+                    📅 Período analizado: <span class="font-semibold">${totalDias} días</span> - 
+                    <span class="font-semibold">${totalServicios} servicios</span> - 
+                    <span class="font-semibold">$${totalMonto.toLocaleString('es-CL')}</span><br>
+                    💰 Promedio diario: <span class="font-semibold">$${promedioDiario.toLocaleString('es-CL')}</span>
+                </div>
+            </div>
+        `;
+        
+        container.innerHTML = html;
+        
+    } catch (error) {
+        console.error('❌ Error filtrando tendencia:', error);
+        container.innerHTML = `
+            <div class="text-center py-4 text-red-600">
+                <div class="text-2xl mb-2">⚠️</div>
+                <p>Error al cargar datos del período</p>
+            </div>
+        `;
+    }
+}
         // Mostrar Métodos de pago
       function mostrarMetodosPagoOptimizado(servicios) {
     // Mostrar botones de filtro y contenido inicial
@@ -2490,51 +2660,43 @@ async function filtrarProductividad(periodo) {
     filtrarProductividad('7d');
 }
         
-        function mostrarTendenciaOptimizada(servicios) {
-            const porDia = {};
-            servicios.forEach(s => {
-                const fecha = s.fecha;
-                if (!porDia[fecha]) {
-                    porDia[fecha] = { servicios: 0, monto: 0 };
-                }
-                porDia[fecha].servicios++;
-                porDia[fecha].monto += parseFloat(s.monto_total || 0);
-            });
-            
-            const dias = Object.entries(porDia)
-                .sort(([a], [b]) => a.localeCompare(b))
-                .map(([fecha, data]) => ({
-                    fecha,
-                    dia: new Date(fecha + 'T00:00:00').toLocaleDateString('es-CL', { weekday: 'short', day: 'numeric' }),
-                    servicios: data.servicios,
-                    monto: data.monto
-                }));
-            
-            const maxMonto = Math.max(...dias.map(d => d.monto));
-            
-            let html = '<div class="space-y-3">';
-            dias.forEach(dia => {
-                const altura = maxMonto > 0 ? Math.round((dia.monto / maxMonto) * 100) : 0;
-                const intensidad = altura > 80 ? 'from-red-400 to-red-600' : 
-                                  altura > 60 ? 'from-orange-400 to-orange-600' :
-                                  altura > 40 ? 'from-yellow-400 to-yellow-600' : 'from-green-400 to-green-600';
-                
-                html += `
-                    <div class="flex items-center space-x-3">
-                        <div class="w-16 text-sm font-medium text-gray-700">${dia.dia}</div>
-                        <div class="flex-1 bg-gray-200 rounded-full h-6 relative">
-                            <div class="bg-gradient-to-r ${intensidad} h-6 rounded-full transition-all duration-1000" style="width: ${altura}%"></div>
-                            <div class="absolute inset-0 flex items-center justify-center">
-                                <span class="text-xs font-bold text-white">${dia.servicios} - $${Math.round(dia.monto/1000)}k</span>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            });
-            html += '</div>';
-            
-            document.getElementById('tendenciaSemanal').innerHTML = html;
-        }
+      function mostrarTendenciaOptimizada(servicios) {
+    // Mostrar botones de filtro y contenido inicial
+    const container = document.getElementById('tendenciaSemanal');
+    
+    container.innerHTML = `
+        <!-- Botones de Filtro -->
+        <div class="flex flex-wrap gap-2 mb-4 justify-center">
+            <button onclick="filtrarTendencia('7d')" id="btn-tend-7d" class="filtro-tendencia-btn filtro-tendencia-activo px-3 py-1 text-sm rounded-full bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors">
+                7 días
+            </button>
+            <button onclick="filtrarTendencia('30d')" id="btn-tend-30d" class="filtro-tendencia-btn px-3 py-1 text-sm rounded-full bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors">
+                30 días
+            </button>
+            <button onclick="filtrarTendencia('3m')" id="btn-tend-3m" class="filtro-tendencia-btn px-3 py-1 text-sm rounded-full bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors">
+                3 meses
+            </button>
+            <button onclick="filtrarTendencia('1y')" id="btn-tend-1y" class="filtro-tendencia-btn px-3 py-1 text-sm rounded-full bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors">
+                1 año
+            </button>
+            <button onclick="filtrarTendencia('todo')" id="btn-tend-todo" class="filtro-tendencia-btn px-3 py-1 text-sm rounded-full bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors">
+                Siempre
+            </button>
+        </div>
+        
+        <!-- Contenedor del Gráfico -->
+        <div id="graficoTendencia">
+            <div class="text-center py-4">
+                <div class="loading-spinner mx-auto"></div>
+                <p class="mt-2 text-gray-600">Analizando tendencias...</p>
+            </div>
+        </div>
+    `;
+    
+    // Guardar servicios para filtros y cargar datos inicial (7 días)
+    window.serviciosGlobalesTendencia = servicios;
+    filtrarTendencia('7d');
+}
         
         function mostrarInsightsOptimizados(servicios) {
             // Calcular insights
