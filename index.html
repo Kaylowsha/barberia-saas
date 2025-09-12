@@ -2254,7 +2254,164 @@ async function filtrarMetodosPago(periodo) {
         `;
     }
 }
-
+async function filtrarProductividad(periodo) {
+    console.log(`👨‍💼 Filtrando productividad por: ${periodo}`);
+    
+    // Actualizar estado visual de botones
+    document.querySelectorAll('.filtro-productividad-btn').forEach(btn => {
+        btn.classList.remove('filtro-productividad-activo', 'bg-blue-600', 'text-white');
+        btn.classList.add('bg-gray-200', 'text-gray-700');
+    });
+    
+    const btnActivo = document.getElementById(`btn-prod-${periodo}`);
+    if (btnActivo) {
+        btnActivo.classList.add('filtro-productividad-activo', 'bg-blue-600', 'text-white');
+        btnActivo.classList.remove('bg-gray-200', 'text-gray-700');
+    }
+    
+    // Mostrar loading
+    const container = document.getElementById('graficoProductividad');
+    container.innerHTML = `
+        <div class="text-center py-4">
+            <div class="loading-spinner mx-auto"></div>
+            <p class="mt-2 text-gray-600">Analizando ${periodo === '7d' ? '7 días' : periodo === '30d' ? '30 días' : periodo === '3m' ? '3 meses' : periodo === '1y' ? '1 año' : 'todos los datos'}...</p>
+        </div>
+    `;
+    
+    try {
+        // Calcular fechas según el período
+        const hoy = new Date();
+        let fechaInicio;
+        
+        switch(periodo) {
+            case '7d':
+                fechaInicio = new Date();
+                fechaInicio.setDate(hoy.getDate() - 7);
+                break;
+            case '30d':
+                fechaInicio = new Date();
+                fechaInicio.setDate(hoy.getDate() - 30);
+                break;
+            case '3m':
+                fechaInicio = new Date();
+                fechaInicio.setMonth(hoy.getMonth() - 3);
+                break;
+            case '1y':
+                fechaInicio = new Date();
+                fechaInicio.setFullYear(hoy.getFullYear() - 1);
+                break;
+            case 'todo':
+                fechaInicio = new Date('2020-01-01'); // Fecha muy antigua
+                break;
+        }
+        
+        const fechaFin = hoy.toISOString().split('T')[0];
+        const fechaInicioStr = fechaInicio.toISOString().split('T')[0];
+        
+        console.log(`📅 Consultando productividad desde ${fechaInicioStr} hasta ${fechaFin}`);
+        
+        // Cargar servicios del período
+        const { data: servicios, error } = await supabase
+            .from('citas')
+            .select('realizado_por_nombre, monto_total')
+            .eq('barberia_id', SUPABASE_CONFIG.barberiaId)
+            .gte('fecha', fechaInicioStr)
+            .lte('fecha', fechaFin);
+        
+        if (error) throw error;
+        
+        if (!servicios || servicios.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-8 text-gray-500">
+                    <div class="text-4xl mb-2">👨‍💼</div>
+                    <p>No hay servicios registrados en ${periodo === '7d' ? 'los últimos 7 días' : periodo === '30d' ? 'los últimos 30 días' : periodo === '3m' ? 'los últimos 3 meses' : periodo === '1y' ? 'el último año' : 'el histórico'}</p>
+                </div>
+            `;
+            return;
+        }
+        
+        // Procesar datos de productividad
+        const barberos = {};
+        servicios.forEach(s => {
+            const barbero = s.realizado_por_nombre;
+            if (!barberos[barbero]) {
+                barberos[barbero] = { servicios: 0, monto: 0 };
+            }
+            barberos[barbero].servicios++;
+            barberos[barbero].monto += parseFloat(s.monto_total || 0);
+        });
+        
+        if (Object.keys(barberos).length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-8 text-gray-500">
+                    <p>No hay datos suficientes para mostrar</p>
+                </div>
+            `;
+            return;
+        }
+        
+        // Ordenar por número de servicios
+        const barberosArray = Object.entries(barberos)
+            .sort(([,a], [,b]) => b.servicios - a.servicios);
+        
+        // Generar gráfico
+        const coloresBarberos = [
+            'from-blue-500 to-indigo-600', 
+            'from-green-500 to-teal-600', 
+            'from-purple-500 to-pink-600',
+            'from-orange-500 to-red-600',
+            'from-yellow-500 to-orange-600'
+        ];
+        
+        let html = '<div class="space-y-3">';
+        barberosArray.forEach(([barbero, data], index) => {
+            const porcentajeServicios = Math.round((data.servicios / servicios.length) * 100);
+            const promedioPorServicio = Math.round(data.monto / data.servicios);
+            const color = coloresBarberos[index] || 'from-gray-500 to-gray-600';
+            
+            html += `
+                <div class="bg-gradient-to-r ${color} text-white p-4 rounded-lg">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <div class="font-bold text-lg">${barbero}</div>
+                            <div class="text-sm opacity-90">${data.servicios} servicios (${porcentajeServicios}%)</div>
+                            <div class="text-sm opacity-90">Promedio: $${promedioPorServicio.toLocaleString('es-CL')}/servicio</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-xl font-bold">$${data.monto.toLocaleString('es-CL')}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        html += '</div>';
+        
+        // Agregar resumen del período
+        const totalServicios = servicios.length;
+        const totalMonto = servicios.reduce((sum, s) => sum + parseFloat(s.monto_total || 0), 0);
+        
+        html += `
+            <div class="mt-4 pt-4 border-t border-gray-200">
+                <div class="text-xs text-gray-500 text-center">
+                    👨‍💼 Total analizado: <span class="font-semibold">${totalServicios} servicios</span> - 
+                    <span class="font-semibold">$${totalMonto.toLocaleString('es-CL')}</span> en 
+                    <span class="font-semibold">${periodo === '7d' ? '7 días' : periodo === '30d' ? '30 días' : periodo === '3m' ? '3 meses' : periodo === '1y' ? '1 año' : 'todo el histórico'}</span>
+                </div>
+            </div>
+        `;
+        
+        container.innerHTML = html;
+        
+    } catch (error) {
+        console.error('❌ Error filtrando productividad:', error);
+        container.innerHTML = `
+            <div class="text-center py-4 text-red-600">
+                <div class="text-2xl mb-2">⚠️</div>
+                <p>Error al cargar datos del período</p>
+            </div>
+        `;
+    }
+}
         // Mostrar Métodos de pago
       function mostrarMetodosPagoOptimizado(servicios) {
     // Mostrar botones de filtro y contenido inicial
@@ -2293,48 +2450,45 @@ async function filtrarMetodosPago(periodo) {
     window.serviciosGlobalesMetodos = servicios;
     filtrarMetodosPago('7d');
 }
+        // PRODUCTIVIDAD POR BARBERO
         
-        function mostrarProductividadOptimizada(servicios) {
-            const barberos = {};
-            servicios.forEach(s => {
-                const barbero = s.realizado_por_nombre;
-                if (!barberos[barbero]) {
-                    barberos[barbero] = { servicios: 0, monto: 0 };
-                }
-                barberos[barbero].servicios++;
-                barberos[barbero].monto += parseFloat(s.monto_total || 0);
-            });
-            
-            const barberosArray = Object.entries(barberos)
-                .sort(([,a], [,b]) => b.servicios - a.servicios);
-            
-            const coloresBarberos = ['from-blue-500 to-indigo-600', 'from-green-500 to-teal-600', 'from-purple-500 to-pink-600'];
-            
-            let html = '<div class="space-y-3">';
-            barberosArray.forEach(([barbero, data], index) => {
-                const porcentajeServicios = Math.round((data.servicios / servicios.length) * 100);
-                const promedioPorServicio = Math.round(data.monto / data.servicios);
-                const color = coloresBarberos[index] || 'from-gray-500 to-gray-600';
-                
-                html += `
-                    <div class="bg-gradient-to-r ${color} text-white p-4 rounded-lg">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <div class="font-bold text-lg">${barbero}</div>
-                                <div class="text-sm opacity-90">${data.servicios} servicios (${porcentajeServicios}%)</div>
-                                <div class="text-sm opacity-90">Promedio: $${promedioPorServicio.toLocaleString('es-CL')}/servicio</div>
-                            </div>
-                            <div class="text-right">
-                                <div class="text-xl font-bold">$${data.monto.toLocaleString('es-CL')}</div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            });
-            html += '</div>';
-            
-            document.getElementById('productividadBarberos').innerHTML = html;
-        }
+      function mostrarProductividadOptimizada(servicios) {
+    // Mostrar botones de filtro y contenido inicial
+    const container = document.getElementById('productividadBarberos');
+    
+    container.innerHTML = `
+        <!-- Botones de Filtro -->
+        <div class="flex flex-wrap gap-2 mb-4 justify-center">
+            <button onclick="filtrarProductividad('7d')" id="btn-prod-7d" class="filtro-productividad-btn filtro-productividad-activo px-3 py-1 text-sm rounded-full bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors">
+                7 días
+            </button>
+            <button onclick="filtrarProductividad('30d')" id="btn-prod-30d" class="filtro-productividad-btn px-3 py-1 text-sm rounded-full bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors">
+                30 días
+            </button>
+            <button onclick="filtrarProductividad('3m')" id="btn-prod-3m" class="filtro-productividad-btn px-3 py-1 text-sm rounded-full bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors">
+                3 meses
+            </button>
+            <button onclick="filtrarProductividad('1y')" id="btn-prod-1y" class="filtro-productividad-btn px-3 py-1 text-sm rounded-full bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors">
+                1 año
+            </button>
+            <button onclick="filtrarProductividad('todo')" id="btn-prod-todo" class="filtro-productividad-btn px-3 py-1 text-sm rounded-full bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors">
+                Siempre
+            </button>
+        </div>
+        
+        <!-- Contenedor del Gráfico -->
+        <div id="graficoProductividad">
+            <div class="text-center py-4">
+                <div class="loading-spinner mx-auto"></div>
+                <p class="mt-2 text-gray-600">Midiendo rendimiento...</p>
+            </div>
+        </div>
+    `;
+    
+    // Guardar servicios para filtros y cargar datos inicial (7 días)
+    window.serviciosGlobalesProductividad = servicios;
+    filtrarProductividad('7d');
+}
         
         function mostrarTendenciaOptimizada(servicios) {
             const porDia = {};
