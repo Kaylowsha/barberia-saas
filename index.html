@@ -532,41 +532,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     hideLoading();
 }
             
-            // Aquí iría la lógica para guardar en Supabase
-            const servicioPrincipal = document.getElementById('servicioPrincipal');
-            const servicioAdicional = document.getElementById('servicioAdicional');
-            const monto = document.getElementById('monto').value;
-            const formaPago = document.getElementById('formaPago').value;
-            const notas = document.getElementById('notas').value;
-            
-            try {
-                const { data, error } = await supabase
-                    .from('citas')
-                    .insert({
-                        barberia_id: currentBarberia.id,
-                        realizado_por_id: currentUser.id,
-                        realizado_por_nombre: currentUser.nombre,
-                        servicio_principal_id: servicioPrincipal.value,
-                        servicio_principal_nombre: servicioPrincipal.options[servicioPrincipal.selectedIndex].text,
-                        servicio_adicional_id: servicioAdicional.value || null,
-                        servicio_adicional_nombre: servicioAdicional.value ? servicioAdicional.options[servicioAdicional.selectedIndex].text : null,
-                        monto_total: monto,
-                        forma_pago: formaPago,
-                        notas: notas || null
-                    });
-                
-                if (error) throw error;
-                
-                alert('Servicio registrado exitosamente!');
-                document.getElementById('registroForm').reset();
-                
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Error al registrar el servicio');
-            }
-            
-            hideLoading();
-        }
+       
         
         function loadResumen() {
             document.getElementById('contentArea').innerHTML = `
