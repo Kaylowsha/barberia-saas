@@ -858,71 +858,210 @@ barberosDemo.forEach(barbero => {
         // ===============================
         // PESTAÑA: SERVICIOS
         // ===============================
-        async function loadServicios() {
-            document.getElementById('contentArea').innerHTML = `
-                <h2 class="text-2xl font-bold mb-6">
-                    <i class="fas fa-list mr-2"></i>Servicios
-                </h2>
-                <div id="serviciosLista" class="mt-6">
-                    <div class="text-center py-8">
-                        <div class="loading-spinner mx-auto"></div>
-                        <p class="mt-4 text-gray-600">Cargando servicios...</p>
-                    </div>
+      async function loadServicios() {
+    console.log('🔍 Cargando servicios...');
+    
+    document.getElementById('contentArea').innerHTML = `
+        <div class="max-w-6xl mx-auto">
+            <h2 class="text-2xl font-bold mb-6">
+                <i class="fas fa-list mr-2"></i>Servicios
+            </h2>
+            
+            ${userRole === 'admin' ? `
+            <!-- Filtros para Admin -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Filtrar por Barbero:</label>
+                    <select id="selectBarberoServicios" class="w-full px-4 py-2 border border-gray-300 rounded-lg" onchange="cargarListaServicios()">
+                        <option value="todos">Ver Todos</option>
+                        <option value="mi">Mis Servicios</option>
+                    </select>
                 </div>
-            `;
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Buscar por Código:</label>
+                    <input type="text" id="buscarCodigo" placeholder="Ej: 5, #5" class="w-full px-4 py-2 border border-gray-300 rounded-lg" onkeyup="filtrarPorCodigo()">
+                </div>
+            </div>
+            ` : ''}
+            
+            <div id="serviciosLista" class="mt-6">
+                <div class="text-center py-8">
+                    <div class="loading-spinner mx-auto"></div>
+                    <p class="mt-4 text-gray-600">Cargando servicios...</p>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Cargar barberos para filtro si es admin
+    if (userRole === 'admin') {
+        cargarBarberosEnFiltroServicios();
+    }
+    
+    // Cargar servicios
+    cargarListaServicios();
+}
 
-            try {
-                const hoy = new Date().toISOString().split('T')[0];
-                let query = supabase
-                    .from('citas')
-                    .select('*')
-                    .eq('barberia_id', SUPABASE_CONFIG.barberiaId)
-                    .eq('fecha', hoy);
+async function cargarBarberosEnFiltroServicios() {
+    try {
+        const barberosDemo = [
+            { id: '1a0242b8-bc7a-4e61-9e33-ac182996a950', nombre: 'Misho' }
+        ];
+        
+        const select = document.getElementById('selectBarberoServicios');
+        if (!select) return;
+        
+        barberosDemo.forEach(barbero => {
+            const option = document.createElement('option');
+            option.value = barbero.id;
+            option.textContent = barbero.nombre;
+            select.appendChild(option);
+        });
+        
+    } catch (error) {
+        console.error('❌ Error cargando barberos para servicios:', error);
+    }
+}
 
-                // Si es empleado, solo ver SUS servicios
-                if (userRole === 'empleado') {
+let serviciosGlobales = []; // Para búsqueda por código
+
+async function cargarListaServicios() {
+    try {
+        console.log('🔍 Cargando lista de servicios...');
+        
+        const hoy = new Date().toISOString().split('T')[0];
+        let query = supabase
+            .from('citas')
+            .select('*')
+            .eq('barberia_id', SUPABASE_CONFIG.barberiaId)
+            .eq('fecha', hoy);
+
+        // Aplicar filtros según rol
+        if (userRole === 'empleado') {
+            query = query.eq('realizado_por_id', currentUser.id);
+        } else if (userRole === 'admin') {
+            const filtro = document.getElementById('selectBarberoServicios')?.value || 'todos';
+            if (filtro !== 'todos') {
+                if (filtro === 'mi') {
                     query = query.eq('realizado_por_id', currentUser.id);
+                } else {
+                    query = query.eq('realizado_por_id', filtro);
                 }
-
-                const { data, error } = await query.order('codigo_diario', { ascending: false });
-
-                if (error) throw error;
-
-                const listaHTML = data && data.length > 0 ?
-                    `<div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Código</th>
-                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Barbero</th>
-                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Servicio</th>
-                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Monto</th>
-                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Pago</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                                ${data.map(s => `
-                                    <tr>
-                                        <td class="px-4 py-2 text-sm">#${s.codigo_diario}</td>
-                                        <td class="px-4 py-2 text-sm">${s.realizado_por_nombre}</td>
-                                        <td class="px-4 py-2 text-sm">${s.servicio_principal_nombre}</td>
-                                        <td class="px-4 py-2 text-sm font-semibold">${s.monto_total.toLocaleString('es-CL')}</td>
-                                        <td class="px-4 py-2 text-sm">${s.forma_pago}</td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    </div>`
-                    : '<p class="text-gray-500">No hay servicios registrados hoy.</p>';
-
-                document.getElementById('serviciosLista').innerHTML = listaHTML;
-
-            } catch (error) {
-                console.error('Error:', error);
-                document.getElementById('serviciosLista').innerHTML =
-                    '<p class="text-red-600">Error al cargar servicios</p>';
             }
         }
+
+        const { data, error } = await query.order('codigo_diario', { ascending: false });
+
+        if (error) throw error;
+
+        serviciosGlobales = data || [];
+        mostrarListaServicios(serviciosGlobales);
+
+    } catch (error) {
+        console.error('❌ Error cargando servicios:', error);
+        document.getElementById('serviciosLista').innerHTML =
+            '<div class="text-red-600 text-center">❌ Error al cargar servicios</div>';
+    }
+}
+
+function mostrarListaServicios(servicios) {
+    const container = document.getElementById('serviciosLista');
+    
+    if (!servicios || servicios.length === 0) {
+        container.innerHTML = '<div class="text-gray-500 text-center py-8">No hay servicios registrados hoy</div>';
+        return;
+    }
+
+    const esAdmin = userRole === 'admin';
+    let html = `
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Código</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Barbero</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Servicio</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Monto</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pago</th>
+                        ${esAdmin ? '<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Acciones</th>' : ''}
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+    `;
+
+    servicios.forEach(servicio => {
+        html += `
+            <tr>
+                <td class="px-4 py-3 text-sm font-mono">#${servicio.codigo_diario || servicio.id}</td>
+                <td class="px-4 py-3 text-sm">${servicio.realizado_por_nombre}</td>
+                <td class="px-4 py-3 text-sm">${servicio.servicio_principal_nombre}</td>
+                <td class="px-4 py-3 text-sm font-semibold text-green-600">$${servicio.monto_total.toLocaleString('es-CL')}</td>
+                <td class="px-4 py-3 text-sm">${servicio.forma_pago}</td>
+                ${esAdmin ? `<td class="px-4 py-3 text-sm">
+                    <button class="bg-red-500 text-white px-3 py-1 rounded text-xs hover:bg-red-600" onclick="confirmarEliminarServicio(${servicio.id}, '${servicio.codigo_diario || servicio.id}')">
+                        🗑️ Eliminar
+                    </button>
+                </td>` : ''}
+            </tr>
+        `;
+    });
+
+    html += `
+                </tbody>
+            </table>
+        </div>
+        <div class="mt-4 text-sm text-gray-600">
+            Total mostrado: ${servicios.length} servicios
+        </div>
+    `;
+
+    container.innerHTML = html;
+}
+
+function filtrarPorCodigo() {
+    const codigo = document.getElementById('buscarCodigo').value.replace('#', '').trim();
+    
+    if (!codigo) {
+        mostrarListaServicios(serviciosGlobales);
+        return;
+    }
+    
+    const serviciosFiltrados = serviciosGlobales.filter(servicio => {
+        const codigoServicio = (servicio.codigo_diario || servicio.id).toString();
+        return codigoServicio.includes(codigo);
+    });
+    
+    mostrarListaServicios(serviciosFiltrados);
+}
+
+async function confirmarEliminarServicio(servicioId, codigo) {
+    if (!confirm(`¿Eliminar servicio #${codigo}? Esta acción NO se puede deshacer y afectará los cálculos.`)) {
+        return;
+    }
+    
+    try {
+        console.log(`🗑️ Eliminando servicio ID: ${servicioId}`);
+        
+        const { error } = await supabase
+            .from('citas')
+            .delete()
+            .eq('id', servicioId)
+            .eq('barberia_id', SUPABASE_CONFIG.barberiaId);
+        
+        if (error) {
+            console.error('❌ Error eliminando servicio:', error);
+            alert(`❌ Error al eliminar: ${error.message}`);
+        } else {
+            alert(`✅ Servicio #${codigo} eliminado correctamente`);
+            // Recargar lista
+            cargarListaServicios();
+        }
+        
+    } catch (error) {
+        console.error('❌ Error crítico:', error);
+        alert('❌ Error del sistema al eliminar servicio');
+    }
+}
         
         // ===============================
         // PESTAÑAS PENDIENTES
