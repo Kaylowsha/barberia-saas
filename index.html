@@ -1666,17 +1666,24 @@ async function limpiarSemanaAdelantos() {
                 }, {}) : {};
                 
                 // Cargar adelantos SOLO para vista semanal y rango
-                let totalAdelantos = 0;
-                if (vista !== 'diaria') {
-                    console.log('💸 Cargando adelantos para cierre...');
-                    
-                    let queryAdelantos = supabase
-                        .from('adelantos')
-                        .select('barbero_id, monto')
-                        .eq('barberia_id', SUPABASE_CONFIG.barberiaId)
-                        .eq('activo', true)
-                        .gte('created_at', fechaInicio + 'T00:00:00')
-                        .lte('created_at', fechaFin + 'T23:59:59');
+let totalAdelantos = 0;
+if (vista !== 'diaria') {
+    console.log('💸 Cargando adelantos para cierre...');
+    
+    let queryAdelantos = supabase
+        .from('adelantos')
+        .select('barbero_id, monto')
+        .eq('barberia_id', SUPABASE_CONFIG.barberiaId)
+        .gte('created_at', fechaInicio + 'T00:00:00')
+        .lte('created_at', fechaFin + 'T23:59:59');
+    
+    // Solo filtrar por activo si es vista SEMANAL
+    if (vista === 'semanal') {
+        queryAdelantos = queryAdelantos.eq('activo', true);
+        console.log('💰 Cierre semanal: solo adelantos activos');
+    } else {
+        console.log('💰 Cierre rango: todos los adelantos históricos');
+    }
                     
                     // Aplicar mismo filtro que servicios
                     if (filtro !== 'todos') {
