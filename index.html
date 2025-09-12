@@ -12,7 +12,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <!-- Configuración -->
-<script src="config.js"></script>
+    <script src="config.js"></script>
     
     <!-- Font Awesome para iconos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -41,126 +41,6 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        /* Estilos para Resumen */
-.resumen-card {
-    background: white;
-    border-radius: 8px;
-    padding: 20px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.fecha-rango {
-    color: #666;
-    font-size: 14px;
-    margin-bottom: 20px;
-}
-
-.resumen-stats {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 15px;
-    margin: 20px 0;
-}
-
-.stat-item {
-    background: #f8f9fa;
-    padding: 15px;
-    border-radius: 8px;
-    text-align: center;
-}
-
-.stat-label {
-    font-size: 12px;
-    color: #666;
-    margin-bottom: 5px;
-}
-
-.stat-value {
-    font-size: 24px;
-    font-weight: bold;
-    color: #333;
-}
-
-.desglose-pago {
-    margin-top: 20px;
-    padding-top: 20px;
-    border-top: 1px solid #eee;
-}
-
-.desglose-pago h4 {
-    font-size: 16px;
-    margin-bottom: 10px;
-}
-
-.desglose-pago ul {
-    list-style: none;
-    padding: 0;
-}
-
-.desglose-pago li {
-    padding: 8px 0;
-    font-size: 14px;
-}
-        /* Estilos para Resumen */
-.resumen-card {
-    background: white;
-    border-radius: 8px;
-    padding: 20px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.fecha-rango {
-    color: #666;
-    font-size: 14px;
-    margin-bottom: 20px;
-}
-
-.resumen-stats {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 15px;
-    margin: 20px 0;
-}
-
-.stat-item {
-    background: #f8f9fa;
-    padding: 15px;
-    border-radius: 8px;
-    text-align: center;
-}
-
-.stat-label {
-    font-size: 12px;
-    color: #666;
-    margin-bottom: 5px;
-}
-
-.stat-value {
-    font-size: 24px;
-    font-weight: bold;
-    color: #333;
-}
-
-.desglose-pago {
-    margin-top: 20px;
-    padding-top: 20px;
-    border-top: 1px solid #eee;
-}
-
-.desglose-pago h4 {
-    font-size: 16px;
-    margin-bottom: 10px;
-}
-
-.desglose-pago ul {
-    list-style: none;
-    padding: 0;
-}
-
-.desglose-pago li {
-    padding: 8px 0;
-    font-size: 14px;
-}
     </style>
 </head>
 <body class="bg-gray-50">
@@ -281,7 +161,7 @@
         // CONFIGURACIÓN DE SUPABASE
         // ===============================
         const SUPABASE_URL = SUPABASE_CONFIG.url;
-const SUPABASE_ANON_KEY = SUPABASE_CONFIG.anonKey;
+        const SUPABASE_ANON_KEY = SUPABASE_CONFIG.anonKey;
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         
         // Variables globales
@@ -289,72 +169,71 @@ const SUPABASE_ANON_KEY = SUPABASE_CONFIG.anonKey;
         let currentBarberia = null;
         let userRole = null;
         
-     // ===============================
-// FUNCIONES DE AUTENTICACIÓN
-// ===============================
-document.getElementById('loginForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-    
-    showLoading();
-    hideError();
-    
-    try {
-        // LOGIN TEMPORAL - Sin verificación real
-        // Simulamos los datos del usuario basado en el email
-        let userData = null;
-        
-        if (email === 'israelparancan.n@gmail.com') {
-            userData = {
-                id: '3fbc31cc-da0a-4f4a-b45b-e7a51320c92c',
-                email: email,
-                nombre: 'Administrador',
-                role: 'admin',
-                barberia_id: '79da96ae-4357-4ede-8c98-9a61c1c3378e',
-                barberias: {
-                    id: '79da96ae-4357-4ede-8c98-9a61c1c3378e',
-                    nombre: 'NatWin',
-                    plan: 'trial'
+        // ===============================
+        // FUNCIONES DE AUTENTICACIÓN
+        // ===============================
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            showLoading();
+            hideError();
+            
+            try {
+                // LOGIN TEMPORAL - Sin verificación real
+                let userData = null;
+                
+                if (email === 'israelparancan.n@gmail.com') {
+                    userData = {
+                        id: '3fbc31cc-da0a-4f4a-b45b-e7a51320c92c',
+                        email: email,
+                        nombre: 'Administrador',
+                        role: 'admin',
+                        barberia_id: '79da96ae-4357-4ede-8c98-9a61c1c3378e',
+                        barberias: {
+                            id: '79da96ae-4357-4ede-8c98-9a61c1c3378e',
+                            nombre: 'NatWin',
+                            plan: 'trial'
+                        }
+                    };
+                } else if (email === 'ispn4trade@gmail.com') {
+                    userData = {
+                        id: '1a0242b8-bc7a-4e61-9e33-ac182996a950',
+                        email: email,
+                        nombre: 'Misho',
+                        role: 'empleado',
+                        barberia_id: '79da96ae-4357-4ede-8c98-9a61c1c3378e',
+                        barberias: {
+                            id: '79da96ae-4357-4ede-8c98-9a61c1c3378e',
+                            nombre: 'NatWin',
+                            plan: 'trial'
+                        }
+                    };
+                } else {
+                    showError('Usuario no encontrado. Usa uno de los emails de prueba.');
+                    hideLoading();
+                    return;
                 }
-            };
-        } else if (email === 'ispn4trade@gmail.com') {
-            userData = {
-                id: '1a0242b8-bc7a-4e61-9e33-ac182996a950',
-                email: email,
-                nombre: 'Misho',
-                role: 'empleado',
-                barberia_id: '79da96ae-4357-4ede-8c98-9a61c1c3378e',
-                barberias: {
-                    id: '79da96ae-4357-4ede-8c98-9a61c1c3378e',
-                    nombre: 'NatWin',
-                    plan: 'trial'
-                }
-            };
-        } else {
-            showError('Usuario no encontrado. Usa uno de los emails de prueba.');
+                
+                // Login exitoso
+                currentUser = userData;
+                currentBarberia = userData.barberias;
+                userRole = userData.role;
+                
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                localStorage.setItem('userRole', userRole);
+                
+                initializeApp();
+                
+            } catch (error) {
+                console.error('Error:', error);
+                showError('Error al iniciar sesión. Intenta nuevamente.');
+            }
+            
             hideLoading();
-            return;
-        }
-        
-        // Login exitoso
-        currentUser = userData;
-        currentBarberia = userData.barberias;
-        userRole = userData.role;
-        
-        localStorage.setItem('currentUser', JSON.stringify(currentUser));
-        localStorage.setItem('userRole', userRole);
-        
-        initializeApp();
-        
-    } catch (error) {
-        console.error('Error:', error);
-        showError('Error al iniciar sesión. Intenta nuevamente.');
-    }
-    
-    hideLoading();
-});
+        });
         
         function showError(message) {
             const errorDiv = document.getElementById('loginError');
@@ -399,29 +278,13 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
         }
         
         async function checkTrialStatus() {
-            // Temporalmente deshabilitado hasta configurar auth
-    /*
-            if (!currentBarberia) return;
-            
-            const { data: trialStatus } = await supabase
-                .rpc('verificar_estado_trial', { 
-                    p_barberia_id: currentBarberia.id 
-                });
-            
-            if (trialStatus && trialStatus[0].plan === 'trial') {
-                const dias = trialStatus[0].dias_restantes;
+            // Mostrar mensaje temporal
+            if (currentBarberia && currentBarberia.plan === 'trial') {
                 document.getElementById('trialAlert').classList.remove('hidden');
                 document.getElementById('trialMessage').textContent = 
-                    `Período de prueba: ${dias} días restantes. Contacta al administrador para continuar.`;
+                    `Período de prueba activo. 15 días restantes.`;
             }
-            */
-             // Mostrar mensaje temporal
-    if (currentBarberia && currentBarberia.plan === 'trial') {
-        document.getElementById('trialAlert').classList.remove('hidden');
-        document.getElementById('trialMessage').textContent = 
-            `Período de prueba activo. 15 días restantes.`;
-    }
-        } 
+        }
         
         // ===============================
         // GENERACIÓN DE TABS
@@ -475,8 +338,6 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
             }
             
             // Cargar contenido según el tab
-            const contentArea = document.getElementById('contentArea');
-            
             switch(tabId) {
                 case 'registrar':
                     loadRegistrarServicio();
@@ -497,12 +358,12 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
                     loadEstadisticas();
                     break;
                 default:
-                    contentArea.innerHTML = '<p>Sección en desarrollo...</p>';
+                    document.getElementById('contentArea').innerHTML = '<p>Sección en desarrollo...</p>';
             }
         }
         
         // ===============================
-        // CONTENIDO DE CADA TAB
+        // PESTAÑA: REGISTRAR SERVICIO
         // ===============================
         function loadRegistrarServicio() {
             document.getElementById('contentArea').innerHTML = `
@@ -571,412 +432,421 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
         }
         
         async function loadServiciosDropdown() {
-    // Temporalmente usar servicios hardcodeados
-    const servicios = [
-        { id: 1, nombre: 'Corte Tradicional - Estudiante', precio_sugerido: 12000 },
-        { id: 2, nombre: 'Corte Tijera', precio_sugerido: 15000 },
-        { id: 3, nombre: 'Fade - Degradados', precio_sugerido: 18000 },
-        { id: 4, nombre: 'Barba Rasurado', precio_sugerido: 8000 },
-        { id: 5, nombre: 'Perfilado Barba', precio_sugerido: 10000 },
-        { id: 6, nombre: 'Barba Premium', precio_sugerido: 12000 },
-        { id: 7, nombre: 'Rasurado de Barba con Vapor', precio_sugerido: 15000 },
-        { id: 8, nombre: 'Limpieza Facial Premium', precio_sugerido: 20000 },
-        { id: 9, nombre: 'Servicio Full', precio_sugerido: 35000 },
-        { id: 10, nombre: 'Cejas', precio_sugerido: 5000 },
-        { id: 11, nombre: 'Diseños', precio_sugerido: 8000 },
-        { id: 12, nombre: 'Líneas', precio_sugerido: 5000 }
-    ];
-    
-    const options = servicios.map(s => 
-        `<option value="${s.id}" data-precio="${s.precio_sugerido}">${s.nombre}</option>`
-    ).join('');
-    
-    document.getElementById('servicioPrincipal').innerHTML += options;
-    document.getElementById('servicioAdicional').innerHTML += options;
-}
+            // Temporalmente usar servicios hardcodeados
+            const servicios = [
+                { id: 1, nombre: 'Corte Tradicional - Estudiante', precio_sugerido: 12000 },
+                { id: 2, nombre: 'Corte Tijera', precio_sugerido: 15000 },
+                { id: 3, nombre: 'Fade - Degradados', precio_sugerido: 18000 },
+                { id: 4, nombre: 'Barba Rasurado', precio_sugerido: 8000 },
+                { id: 5, nombre: 'Perfilado Barba', precio_sugerido: 10000 },
+                { id: 6, nombre: 'Barba Premium', precio_sugerido: 12000 },
+                { id: 7, nombre: 'Rasurado de Barba con Vapor', precio_sugerido: 15000 },
+                { id: 8, nombre: 'Limpieza Facial Premium', precio_sugerido: 20000 },
+                { id: 9, nombre: 'Servicio Full', precio_sugerido: 35000 },
+                { id: 10, nombre: 'Cejas', precio_sugerido: 5000 },
+                { id: 11, nombre: 'Diseños', precio_sugerido: 8000 },
+                { id: 12, nombre: 'Líneas', precio_sugerido: 5000 }
+            ];
+            
+            const options = servicios.map(s => 
+                `<option value="${s.id}" data-precio="${s.precio_sugerido}">${s.nombre}</option>`
+            ).join('');
+            
+            document.getElementById('servicioPrincipal').innerHTML += options;
+            document.getElementById('servicioAdicional').innerHTML += options;
+        }
         
         async function registrarServicio(e) {
-    e.preventDefault();
-    
-    showLoading();
-    
-    const servicioPrincipal = document.getElementById('servicioPrincipal');
-    const servicioAdicional = document.getElementById('servicioAdicional');
-    const monto = document.getElementById('monto').value;
-    const formaPago = document.getElementById('formaPago').value;
-    const notas = document.getElementById('notas').value;
-    
-    // Validaciones
-    if (!servicioPrincipal.value || !monto || !formaPago) {
-        alert('Por favor completa todos los campos obligatorios');
-        hideLoading();
-        return;
-    }
-    
-    try {
-        // Para desarrollo, guardamos directamente sin auth
-        const nuevoServicio = {
-            barberia_id: SUPABASE_CONFIG.barberiaId,
-            realizado_por_id: currentUser.id,
-            realizado_por_nombre: currentUser.nombre,
-            servicio_principal_id: parseInt(servicioPrincipal.value),
-            servicio_principal_nombre: servicioPrincipal.options[servicioPrincipal.selectedIndex].text,
-            servicio_adicional_id: servicioAdicional.value ? parseInt(servicioAdicional.value) : null,
-            servicio_adicional_nombre: servicioAdicional.value ? servicioAdicional.options[servicioAdicional.selectedIndex].text : null,
-            monto_total: parseFloat(monto),
-            forma_pago: formaPago,
-            notas: notas || null,
-            fecha: new Date().toISOString().split('T')[0]
-        };
-        
-        console.log('Guardando servicio:', nuevoServicio);
-        
-        const { data, error } = await supabase
-            .from('citas')
-            .insert([nuevoServicio])
-            .select();
-        
-        if (error) {
-            console.error('Error de Supabase:', error);
-            alert('Error al guardar: ' + error.message);
-        } else {
-            alert('✅ Servicio registrado exitosamente! Código: #' + (data[0].codigo_diario || data[0].id));
-            document.getElementById('registroForm').reset();
-        }
-        
-    } catch (error) {
-        console.error('Error:', error);
-        alert('Error al registrar el servicio: ' + error.message);
-    }
-    
-    hideLoading();
-}
+            e.preventDefault();
             
-       
-        
-    
-        
-async function loadServicios() {
-    // Establecer el contenido HTML inicial con un spinner de carga
-    document.getElementById('contentArea').innerHTML = `
-        <h2 class="text-2xl font-bold mb-6">
-            <i class="fas fa-list mr-2"></i>Servicios
-        </h2>
-        <div id="serviciosLista" class="mt-6">
-            <div class="flex justify-center">
-                <div class="loading-spinner mx-auto"></div>
-                <p class="mt-4 text-gray-600">Cargando servicios...</p>
-            </div>
-        </div>
-    `;
-
-    try {
-        // Obtener servicios de hoy
-        const hoy = new Date().toISOString().split('T')[0];
-        let query = supabase
-            .from('citas')
-            .select('*')
-            .eq('barberia_id', SUPABASE_CONFIG.barberiaId)
-            .eq('fecha', hoy);
-
-        // Si es empleado, solo ver SUS servicios
-        if (userRole === 'empleado') {
-            query = query.eq('realizado_por_id', currentUser.id);
-        }
-
-        const { data, error } = await query.order('codigo_diario', { ascending: false });
-
-        if (error) throw error;
-
-        const listaHTML = data && data.length > 0 ?
-            `<div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Código</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Barbero</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Servicio</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Monto</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Pago</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        ${data.map(s => `
-                            <tr>
-                                <td class="px-4 py-2 text-sm">#${s.codigo_diario}</td>
-                                <td class="px-4 py-2 text-sm">${s.realizado_por_nombre}</td>
-                                <td class="px-4 py-2 text-sm">${s.servicio_principal_nombre}</td>
-                                <td class="px-4 py-2 text-sm font-semibold">$${s.monto_total.toLocaleString('es-CL')}</td>
-                                <td class="px-4 py-2 text-sm">${s.forma_pago}</td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            </div>`
-            : '<p class="text-gray-500">No hay servicios registrados hoy.</p>';
-
-        document.getElementById('serviciosLista').innerHTML = listaHTML;
-
-    } catch (error) {
-        console.error('Error:', error);
-        document.getElementById('serviciosLista').innerHTML =
-            '<p class="text-red-600">Error al cargar servicios</p>';
-    }
-}
-// Función para cambiar vista del resumen
-function cambiarVistaResumen() {
-    const vista = document.getElementById('vistaResumen').value;
-    const labelFecha = document.getElementById('labelFechaResumen');
-    const inputFecha = document.getElementById('fechaResumen');
-    
-    switch(vista) {
-        case 'diaria':
-            labelFecha.textContent = 'Fecha:';
-            inputFecha.type = 'date';
-            break;
-        case 'semanal':
-            labelFecha.textContent = 'Seleccionar cualquier día de la semana:';
-            inputFecha.type = 'date';
-            break;
-        case 'mensual':
-            labelFecha.textContent = 'Seleccionar mes:';
-            inputFecha.type = 'month';
-            break;
-    }
-    
-    cargarResumen();
-}
-
-// Función para cargar barberos en el filtro
-async function cargarBarberosEnFiltro() {
-    try {
-        const { data: barberos, error } = await supabase
-            .from('usuarios')
-            .select('id, nombre')
-            .eq('barberia_id', BARBERIA_ID)
-            .eq('activo', true);
-        
-        if (error) throw error;
-        
-        const select = document.getElementById('selectBarberoResumen');
-        
-        // Mantener las primeras dos opciones y agregar los barberos
-        select.innerHTML = `
-            <option value="todos">Ver Todos</option>
-            <option value="mi">Mi Resumen</option>
-        `;
-        
-        barberos.forEach(barbero => {
-            const option = document.createElement('option');
-            option.value = barbero.id;
-            option.textContent = barbero.nombre;
-            select.appendChild(option);
-        });
-    } catch (error) {
-        console.error('Error cargando barberos:', error);
-    }
-}
-
-// Función principal para cargar datos del resumen
-async function cargarResumen() {
-    const contenido = document.getElementById('contenidoResumen');
-    contenido.innerHTML = '<div class="loading">Calculando resumen...</div>';
-    
-    try {
-        const vista = document.getElementById('vistaResumen').value;
-        const fecha = document.getElementById('fechaResumen').value;
-        const filtro = document.getElementById('selectBarberoResumen')?.value || 'mi';
-        
-        if (!fecha) {
-            contenido.innerHTML = '<p>Por favor selecciona una fecha</p>';
-            return;
-        }
-        
-        let fechaInicio, fechaFin;
-        
-        // Calcular rango de fechas según la vista
-        if (vista === 'diaria') {
-            fechaInicio = fecha;
-            fechaFin = fecha;
-        } else if (vista === 'semanal') {
-            const date = new Date(fecha);
-            const dayOfWeek = date.getDay();
-            const diff = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Ajustar para que lunes sea el inicio
+            showLoading();
             
-            const lunes = new Date(date);
-            lunes.setDate(date.getDate() - diff);
+            const servicioPrincipal = document.getElementById('servicioPrincipal');
+            const servicioAdicional = document.getElementById('servicioAdicional');
+            const monto = document.getElementById('monto').value;
+            const formaPago = document.getElementById('formaPago').value;
+            const notas = document.getElementById('notas').value;
             
-            const domingo = new Date(lunes);
-            domingo.setDate(lunes.getDate() + 6);
-            
-            fechaInicio = lunes.toISOString().split('T')[0];
-            fechaFin = domingo.toISOString().split('T')[0];
-        } else if (vista === 'mensual') {
-            const [year, month] = fecha.split('-');
-            fechaInicio = `${year}-${month}-01`;
-            const lastDay = new Date(year, month, 0).getDate();
-            fechaFin = `${year}-${month}-${lastDay.toString().padStart(2, '0')}`;
-        }
-        
-        // Construir query base
-        let query = supabase
-            .from('citas')
-            .select('*')
-            .eq('barberia_id', BARBERIA_ID)
-            .gte('created_at', fechaInicio + 'T00:00:00')
-            .lte('created_at', fechaFin + 'T23:59:59');
-        
-        // Aplicar filtro según rol y selección
-        if (currentUser.role === 'empleado') {
-            query = query.eq('realizado_por_id', currentUser.id);
-        } else if (currentUser.role === 'admin' && filtro !== 'todos') {
-            if (filtro === 'mi') {
-                query = query.eq('realizado_por_id', currentUser.id);
-            } else {
-                query = query.eq('realizado_por_id', filtro);
+            // Validaciones
+            if (!servicioPrincipal.value || !monto || !formaPago) {
+                alert('Por favor completa todos los campos obligatorios');
+                hideLoading();
+                return;
             }
-        }
-        
-        const { data: servicios, error } = await query;
-        
-        if (error) throw error;
-        
-        // Calcular totales
-        const totalRecaudado = servicios.reduce((sum, s) => sum + parseFloat(s.monto_total || 0), 0);
-        const totalServicios = servicios.length;
-        
-        // Agrupar por forma de pago
-        const porFormaPago = servicios.reduce((acc, s) => {
-            acc[s.forma_pago] = (acc[s.forma_pago] || 0) + parseFloat(s.monto_total || 0);
-            return acc;
-        }, {});
-        
-        // Obtener adelantos si es vista semanal o mensual
-        let totalAdelantos = 0;
-        if (vista !== 'diaria') {
-            const { data: adelantos } = await supabase
-                .from('adelantos')
-                .select('monto')
-                .eq('barberia_id', BARBERIA_ID)
-                .eq('activo', true)
-                .gte('created_at', fechaInicio + 'T00:00:00')
-                .lte('created_at', fechaFin + 'T23:59:59');
             
-            if (adelantos) {
-                totalAdelantos = adelantos.reduce((sum, a) => sum + parseFloat(a.monto || 0), 0);
-            }
-        }
-        
-        // Mostrar resumen
-        let html = `
-            <div class="resumen-card">
-                <h3>📅 Resumen ${vista === 'diaria' ? 'del Día' : vista === 'semanal' ? 'Semanal' : 'Mensual'}</h3>
-                <p class="fecha-rango">${fechaInicio === fechaFin ? fechaInicio : fechaInicio + ' al ' + fechaFin}</p>
+            try {
+                const nuevoServicio = {
+                    barberia_id: SUPABASE_CONFIG.barberiaId,
+                    realizado_por_id: currentUser.id,
+                    realizado_por_nombre: currentUser.nombre,
+                    servicio_principal_id: parseInt(servicioPrincipal.value),
+                    servicio_principal_nombre: servicioPrincipal.options[servicioPrincipal.selectedIndex].text,
+                    servicio_adicional_id: servicioAdicional.value ? parseInt(servicioAdicional.value) : null,
+                    servicio_adicional_nombre: servicioAdicional.value ? servicioAdicional.options[servicioAdicional.selectedIndex].text : null,
+                    monto_total: parseFloat(monto),
+                    forma_pago: formaPago,
+                    notas: notas || null,
+                    fecha: new Date().toISOString().split('T')[0]
+                };
                 
-                <div class="resumen-stats">
-                    <div class="stat-item">
-                        <div class="stat-label">💰 Total Recaudado</div>
-                        <div class="stat-value">$${totalRecaudado.toLocaleString('es-CL')}</div>
-                    </div>
-                    
-                    <div class="stat-item">
-                        <div class="stat-label">📊 Servicios Realizados</div>
-                        <div class="stat-value">${totalServicios}</div>
-                    </div>
-        `;
+                console.log('Guardando servicio:', nuevoServicio);
+                
+                const { data, error } = await supabase
+                    .from('citas')
+                    .insert([nuevoServicio])
+                    .select();
+                
+                if (error) {
+                    console.error('Error de Supabase:', error);
+                    alert('Error al guardar: ' + error.message);
+                } else {
+                    alert('✅ Servicio registrado exitosamente! Código: #' + (data[0].codigo_diario || data[0].id));
+                    document.getElementById('registroForm').reset();
+                }
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al registrar el servicio: ' + error.message);
+            }
+            
+            hideLoading();
+        }
         
-        if (vista !== 'diaria' && totalAdelantos > 0) {
-            html += `
-                    <div class="stat-item">
-                        <div class="stat-label">💸 Adelantos</div>
-                        <div class="stat-value">$${totalAdelantos.toLocaleString('es-CL')}</div>
-                    </div>
+        // ===============================
+        // PESTAÑA: RESUMEN
+        // ===============================
+        function loadResumen() {
+            document.getElementById('contentArea').innerHTML = `
+                <div class="max-w-4xl mx-auto">
+                    <h2 class="text-2xl font-bold mb-6">
+                        <i class="fas fa-chart-bar mr-2"></i>Resumen
+                    </h2>
                     
-                    <div class="stat-item">
-                        <div class="stat-label">💰 Total Neto</div>
-                        <div class="stat-value" style="color: #4CAF50; font-weight: bold;">
-                            $${(totalRecaudado - totalAdelantos).toLocaleString('es-CL')}
+                    <!-- Selector de Vista -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Seleccionar Vista:</label>
+                        <select id="vistaResumen" class="w-full px-4 py-2 border border-gray-300 rounded-lg" onchange="cambiarVistaResumen()">
+                            <option value="diaria">Vista Diaria</option>
+                            <option value="semanal">Vista Semanal</option>
+                            <option value="mensual">Vista Mensual</option>
+                        </select>
+                    </div>
+
+                    <!-- Filtro de Barbero (solo para admin) -->
+                    <div id="filtroBarberoResumen" class="mb-4" style="display:none;">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Filtrar por Barbero:</label>
+                        <select id="selectBarberoResumen" class="w-full px-4 py-2 border border-gray-300 rounded-lg" onchange="cargarDatosResumen()">
+                            <option value="todos">Ver Todos</option>
+                            <option value="mi">Mi Resumen</option>
+                        </select>
+                    </div>
+
+                    <!-- Selector de Fecha -->
+                    <div class="mb-4">
+                        <label id="labelFechaResumen" class="block text-sm font-medium text-gray-700 mb-2">Fecha:</label>
+                        <input type="date" id="fechaResumen" class="w-full px-4 py-2 border border-gray-300 rounded-lg" onchange="cargarDatosResumen()">
+                    </div>
+
+                    <!-- Contenedor del Resumen -->
+                    <div id="contenidoResumen" class="mt-6">
+                        <div class="text-center py-8">
+                            <div class="loading-spinner mx-auto"></div>
+                            <p class="mt-4 text-gray-600">Cargando resumen...</p>
                         </div>
                     </div>
+                </div>
             `;
+            
+            // Configurar fecha inicial
+            document.getElementById('fechaResumen').value = new Date().toISOString().split('T')[0];
+            
+            // Si es admin, mostrar filtro de barberos
+            if (userRole === 'admin') {
+                document.getElementById('filtroBarberoResumen').style.display = 'block';
+                cargarBarberosEnFiltro();
+            }
+            
+            // Cargar datos del resumen
+            cargarDatosResumen();
         }
         
-        html += `
-                </div>
+        async function cargarDatosResumen() {
+            const contenido = document.getElementById('contenidoResumen');
+            if (!contenido) return;
+            
+            contenido.innerHTML = '<div class="text-center py-8"><div class="loading-spinner mx-auto"></div><p class="mt-4 text-gray-600">Calculando resumen...</p></div>';
+            
+            try {
+                const vista = document.getElementById('vistaResumen').value;
+                const fecha = document.getElementById('fechaResumen').value;
+                const filtro = document.getElementById('selectBarberoResumen')?.value || 'mi';
                 
-                <div class="desglose-pago">
-                    <h4>💳 Desglose por Forma de Pago</h4>
-                    <ul>
-                        <li>💵 Efectivo: $${(porFormaPago['Efectivo'] || 0).toLocaleString('es-CL')}</li>
-                        <li>💳 Cuenta RUT: $${(porFormaPago['Cuenta RUT'] || 0).toLocaleString('es-CL')}</li>
-                        <li>📱 Mercado Pago: $${(porFormaPago['Mercado Pago'] || 0).toLocaleString('es-CL')}</li>
-                    </ul>
+                if (!fecha) {
+                    contenido.innerHTML = '<p class="text-gray-500">Por favor selecciona una fecha</p>';
+                    return;
+                }
+                
+                let fechaInicio, fechaFin;
+                
+                // Calcular rango de fechas según la vista
+                if (vista === 'diaria') {
+                    fechaInicio = fecha;
+                    fechaFin = fecha;
+                } else if (vista === 'semanal') {
+                    const date = new Date(fecha + 'T00:00:00');
+                    const dayOfWeek = date.getDay();
+                    const diff = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+                    
+                    const lunes = new Date(date);
+                    lunes.setDate(date.getDate() - diff);
+                    
+                    const domingo = new Date(lunes);
+                    domingo.setDate(lunes.getDate() + 6);
+                    
+                    fechaInicio = lunes.toISOString().split('T')[0];
+                    fechaFin = domingo.toISOString().split('T')[0];
+                } else if (vista === 'mensual') {
+                    const [year, month] = fecha.split('-');
+                    fechaInicio = `${year}-${month}-01`;
+                    const lastDay = new Date(year, month, 0).getDate();
+                    fechaFin = `${year}-${month}-${lastDay.toString().padStart(2, '0')}`;
+                }
+                
+                // Construir query base
+                let query = supabase
+                    .from('citas')
+                    .select('*')
+                    .eq('barberia_id', SUPABASE_CONFIG.barberiaId)
+                    .gte('fecha', fechaInicio)
+                    .lte('fecha', fechaFin);
+                
+                // Aplicar filtro según rol y selección
+                if (userRole === 'empleado') {
+                    query = query.eq('realizado_por_id', currentUser.id);
+                } else if (userRole === 'admin' && filtro !== 'todos') {
+                    if (filtro === 'mi') {
+                        query = query.eq('realizado_por_id', currentUser.id);
+                    } else {
+                        query = query.eq('realizado_por_id', filtro);
+                    }
+                }
+                
+                const { data: servicios, error } = await query;
+                
+                if (error) throw error;
+                
+                // Calcular totales
+                const totalRecaudado = servicios ? servicios.reduce((sum, s) => sum + parseFloat(s.monto_total || 0), 0) : 0;
+                const totalServicios = servicios ? servicios.length : 0;
+                
+                // Agrupar por forma de pago
+                const porFormaPago = servicios ? servicios.reduce((acc, s) => {
+                    acc[s.forma_pago] = (acc[s.forma_pago] || 0) + parseFloat(s.monto_total || 0);
+                    return acc;
+                }, {}) : {};
+                
+                // Obtener adelantos si es vista semanal o mensual
+                let totalAdelantos = 0;
+                if (vista !== 'diaria' && userRole === 'admin') {
+                    const { data: adelantos } = await supabase
+                        .from('adelantos')
+                        .select('monto')
+                        .eq('barberia_id', SUPABASE_CONFIG.barberiaId)
+                        .eq('activo', true)
+                        .gte('created_at', fechaInicio + 'T00:00:00')
+                        .lte('created_at', fechaFin + 'T23:59:59');
+                    
+                    if (adelantos) {
+                        totalAdelantos = adelantos.reduce((sum, a) => sum + parseFloat(a.monto || 0), 0);
+                    }
+                }
+                
+                // Mostrar resumen
+                let html = `
+                    <div class="bg-white rounded-lg shadow-lg p-6">
+                        <h3 class="text-xl font-bold mb-4">
+                            📅 Resumen ${vista === 'diaria' ? 'del Día' : vista === 'semanal' ? 'Semanal' : 'Mensual'}
+                        </h3>
+                        <p class="text-gray-600 mb-6">${fechaInicio === fechaFin ? fechaInicio : fechaInicio + ' al ' + fechaFin}</p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                            <div class="bg-blue-50 p-4 rounded-lg">
+                                <div class="text-sm text-blue-600 mb-1">💰 Total Recaudado</div>
+                                <div class="text-2xl font-bold text-blue-900">${totalRecaudado.toLocaleString('es-CL')}</div>
+                            </div>
+                            
+                            <div class="bg-green-50 p-4 rounded-lg">
+                                <div class="text-sm text-green-600 mb-1">📊 Servicios Realizados</div>
+                                <div class="text-2xl font-bold text-green-900">${totalServicios}</div>
+                            </div>
+                `;
+                
+                if (vista !== 'diaria' && totalAdelantos > 0) {
+                    html += `
+                            <div class="bg-yellow-50 p-4 rounded-lg">
+                                <div class="text-sm text-yellow-600 mb-1">💸 Adelantos</div>
+                                <div class="text-2xl font-bold text-yellow-900">${totalAdelantos.toLocaleString('es-CL')}</div>
+                            </div>
+                            
+                            <div class="bg-purple-50 p-4 rounded-lg">
+                                <div class="text-sm text-purple-600 mb-1">💰 Total Neto</div>
+                                <div class="text-2xl font-bold text-purple-900">${(totalRecaudado - totalAdelantos).toLocaleString('es-CL')}</div>
+                            </div>
+                    `;
+                }
+                
+                html += `
+                        </div>
+                        
+                        <div class="border-t pt-4">
+                            <h4 class="font-semibold mb-3">💳 Desglose por Forma de Pago</h4>
+                            <div class="space-y-2">
+                                <div class="flex justify-between">
+                                    <span>💵 Efectivo:</span>
+                                    <span class="font-semibold">${(porFormaPago['Efectivo'] || 0).toLocaleString('es-CL')}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>💳 Cuenta RUT:</span>
+                                    <span class="font-semibold">${(porFormaPago['Cuenta RUT'] || 0).toLocaleString('es-CL')}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>📱 Mercado Pago:</span>
+                                    <span class="font-semibold">${(porFormaPago['Mercado Pago'] || 0).toLocaleString('es-CL')}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                contenido.innerHTML = html;
+                
+            } catch (error) {
+                console.error('Error:', error);
+                contenido.innerHTML = '<div class="bg-red-100 p-4 rounded-lg text-red-700">Error al cargar el resumen. Por favor intenta nuevamente.</div>';
+            }
+        }
+        
+        function cambiarVistaResumen() {
+            const vista = document.getElementById('vistaResumen').value;
+            const labelFecha = document.getElementById('labelFechaResumen');
+            const inputFecha = document.getElementById('fechaResumen');
+            
+            if (!labelFecha || !inputFecha) return;
+            
+            switch(vista) {
+                case 'diaria':
+                    labelFecha.textContent = 'Fecha:';
+                    inputFecha.type = 'date';
+                    break;
+                case 'semanal':
+                    labelFecha.textContent = 'Seleccionar cualquier día de la semana:';
+                    inputFecha.type = 'date';
+                    break;
+                case 'mensual':
+                    labelFecha.textContent = 'Seleccionar mes:';
+                    inputFecha.type = 'month';
+                    break;
+            }
+            
+            cargarDatosResumen();
+        }
+        
+        async function cargarBarberosEnFiltro() {
+            try {
+                const { data: barberos, error } = await supabase
+                    .from('usuarios')
+                    .select('id, nombre')
+                    .eq('barberia_id', SUPABASE_CONFIG.barberiaId)
+                    .eq('activo', true);
+                
+                if (error) throw error;
+                
+                const select = document.getElementById('selectBarberoResumen');
+                if (!select) return;
+                
+                barberos.forEach(barbero => {
+                    const option = document.createElement('option');
+                    option.value = barbero.id;
+                    option.textContent = barbero.nombre;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error cargando barberos:', error);
+            }
+        }
+        
+        // ===============================
+        // PESTAÑA: SERVICIOS
+        // ===============================
+        async function loadServicios() {
+            document.getElementById('contentArea').innerHTML = `
+                <h2 class="text-2xl font-bold mb-6">
+                    <i class="fas fa-list mr-2"></i>Servicios
+                </h2>
+                <div id="serviciosLista" class="mt-6">
+                    <div class="text-center py-8">
+                        <div class="loading-spinner mx-auto"></div>
+                        <p class="mt-4 text-gray-600">Cargando servicios...</p>
+                    </div>
                 </div>
-            </div>
-        `;
-        
-        contenido.innerHTML = html;
-        
-    } catch (error) {
-        console.error('Error:', error);
-        contenido.innerHTML = '<div class="error">Error al cargar el resumen</div>';
-    }
-}
-    try {
-        // Obtener servicios de hoy
-        const hoy = new Date().toISOString().split('T')[0];
-        // Filtrar según el rol
-let query = supabase
-    .from('citas')
-    .select('*')
-    .eq('barberia_id', SUPABASE_CONFIG.barberiaId)
-    .eq('fecha', hoy);
+            `;
 
-// Si es empleado, solo ver SUS servicios
-if (userRole === 'empleado') {
-    query = query.eq('realizado_por_id', currentUser.id);
-}
+            try {
+                const hoy = new Date().toISOString().split('T')[0];
+                let query = supabase
+                    .from('citas')
+                    .select('*')
+                    .eq('barberia_id', SUPABASE_CONFIG.barberiaId)
+                    .eq('fecha', hoy);
 
-const { data, error } = await query.order('codigo_diario', { ascending: false });
+                // Si es empleado, solo ver SUS servicios
+                if (userRole === 'empleado') {
+                    query = query.eq('realizado_por_id', currentUser.id);
+                }
+
+                const { data, error } = await query.order('codigo_diario', { ascending: false });
+
+                if (error) throw error;
+
+                const listaHTML = data && data.length > 0 ?
+                    `<div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Código</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Barbero</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Servicio</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Monto</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Pago</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                ${data.map(s => `
+                                    <tr>
+                                        <td class="px-4 py-2 text-sm">#${s.codigo_diario}</td>
+                                        <td class="px-4 py-2 text-sm">${s.realizado_por_nombre}</td>
+                                        <td class="px-4 py-2 text-sm">${s.servicio_principal_nombre}</td>
+                                        <td class="px-4 py-2 text-sm font-semibold">${s.monto_total.toLocaleString('es-CL')}</td>
+                                        <td class="px-4 py-2 text-sm">${s.forma_pago}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>`
+                    : '<p class="text-gray-500">No hay servicios registrados hoy.</p>';
+
+                document.getElementById('serviciosLista').innerHTML = listaHTML;
+
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('serviciosLista').innerHTML =
+                    '<p class="text-red-600">Error al cargar servicios</p>';
+            }
+        }
         
-        if (error) throw error;
-        
-        const listaHTML = data && data.length > 0 ? 
-            `<div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Código</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Barbero</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Servicio</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Monto</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Pago</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        ${data.map(s => `
-                            <tr>
-                                <td class="px-4 py-2 text-sm">#${s.codigo_diario}</td>
-                                <td class="px-4 py-2 text-sm">${s.realizado_por_nombre}</td>
-                                <td class="px-4 py-2 text-sm">${s.servicio_principal_nombre}</td>
-                                <td class="px-4 py-2 text-sm font-semibold">$${s.monto_total.toLocaleString('es-CL')}</td>
-                                <td class="px-4 py-2 text-sm">${s.forma_pago}</td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            </div>` 
-            : '<p class="text-gray-500">No hay servicios registrados hoy.</p>';
-        
-        document.getElementById('serviciosLista').innerHTML = listaHTML;
-        
-    } catch (error) {
-        console.error('Error:', error);
-        document.getElementById('serviciosLista').innerHTML = 
-            '<p class="text-red-600">Error al cargar servicios</p>';
-    }
-}
-        
+        // ===============================
+        // PESTAÑAS PENDIENTES
+        // ===============================
         function loadGestionBarberos() {
             if (userRole !== 'admin') {
                 document.getElementById('contentArea').innerHTML = `
@@ -990,7 +860,9 @@ const { data, error } = await query.order('codigo_diario', { ascending: false })
                     <i class="fas fa-users mr-2"></i>Gestión de Barberos
                 </h2>
                 <p class="text-gray-600">Administra los barberos y adelantos...</p>
-                <!-- Aquí iría el contenido de gestión -->
+                <div class="mt-6 p-4 bg-yellow-50 rounded-lg">
+                    <p class="text-yellow-800">Esta sección está en desarrollo.</p>
+                </div>
             `;
         }
         
@@ -1007,7 +879,9 @@ const { data, error } = await query.order('codigo_diario', { ascending: false })
                     <i class="fas fa-cash-register mr-2"></i>Cierre de Caja
                 </h2>
                 <p class="text-gray-600">Realiza el cierre de caja...</p>
-                <!-- Aquí iría el contenido del cierre -->
+                <div class="mt-6 p-4 bg-yellow-50 rounded-lg">
+                    <p class="text-yellow-800">Esta sección está en desarrollo.</p>
+                </div>
             `;
         }
         
@@ -1024,7 +898,9 @@ const { data, error } = await query.order('codigo_diario', { ascending: false })
                     <i class="fas fa-chart-line mr-2"></i>Estadísticas
                 </h2>
                 <p class="text-gray-600">Visualiza las estadísticas del negocio...</p>
-                <!-- Aquí irían los gráficos y estadísticas -->
+                <div class="mt-6 p-4 bg-yellow-50 rounded-lg">
+                    <p class="text-yellow-800">Esta sección está en desarrollo.</p>
+                </div>
             `;
         }
         
@@ -1045,9 +921,6 @@ const { data, error } = await query.order('codigo_diario', { ascending: false })
             if (savedUser) {
                 currentUser = JSON.parse(savedUser);
                 userRole = localStorage.getItem('userRole');
-                
-                // Aquí deberías verificar que el usuario sigue siendo válido
-                // Por ahora, simplemente inicializamos la app
                 initializeApp();
             }
         });
