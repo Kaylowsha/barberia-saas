@@ -570,164 +570,171 @@
             cargarDatosResumen();
         }
         
-        async function cargarDatosResumen() {
-            const contenido = document.getElementById('contenidoResumen');
-            if (!contenido) return;
+       async function cargarDatosResumen() {
+    const contenido = document.getElementById('contenidoResumen');
+    if (!contenido) return;
+    
+    contenido.innerHTML = '<div class="text-center py-8"><div class="loading-spinner mx-auto"></div><p class="mt-4 text-gray-600">Calculando resumen...</p></div>';
+    
+    try {
+        const vista = document.getElementById('vistaResumen').value;
+        const filtro = document.getElementById('selectBarberoResumen')?.value || 'mi';
+        
+        let fechaInicio, fechaFin, fecha;
+        
+        // Obtener fechas según la vista actual
+        if (vista === 'mensual') {
+            fechaInicio = document.getElementById('fechaDesde')?.value;
+            fechaFin = document.getElementById('fechaHasta')?.value;
             
-            contenido.innerHTML = '<div class="text-center py-8"><div class="loading-spinner mx-auto"></div><p class="mt-4 text-gray-600">Calculando resumen...</p></div>';
+            if (!fechaInicio || !fechaFin) {
+                contenido.innerHTML = '<p class="text-gray-500">Por favor selecciona ambas fechas del rango</p>';
+                return;
+            }
+        } else {
+            // Para diaria y semanal
+            fecha = document.getElementById('fechaResumen')?.value;
             
-            try {
-                const vista = document.getElementById('vistaResumen').value;
-                const fecha = document.getElementById('fechaResumen').value;
-                const filtro = document.getElementById('selectBarberoResumen')?.value || 'mi';
+            if (!fecha) {
+                contenido.innerHTML = '<p class="text-gray-500">Por favor selecciona una fecha</p>';
+                return;
+            }
+            
+            // Calcular rango según la vista
+            if (vista === 'diaria') {
+                fechaInicio = fecha;
+                fechaFin = fecha;
+            } else if (vista === 'semanal') {
+                const date = new Date(fecha + 'T00:00:00');
+                const dayOfWeek = date.getDay();
+                const diff = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
                 
-                if (!fecha) {
-                    contenido.innerHTML = '<p class="text-gray-500">Por favor selecciona una fecha</p>';
-                    return;
-                }
+                const lunes = new Date(date);
+                lunes.setDate(date.getDate() - diff);
                 
-                let fechaInicio, fechaFin;
+                const domingo = new Date(lunes);
+                domingo.setDate(lunes.getDate() + 6);
                 
-                // Calcular rango de fechas según la vista
-               if (vista === 'diaria') {
-    fechaInicio = fecha;
-    fechaFin = fecha;
-} else if (vista === 'semanal') {
-    const date = new Date(fecha + 'T00:00:00');
-    const dayOfWeek = date.getDay();
-    const diff = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-    
-    const lunes = new Date(date);
-    lunes.setDate(date.getDate() - diff);
-    
-    const domingo = new Date(lunes);
-    domingo.setDate(lunes.getDate() + 6);
-    
-    fechaInicio = lunes.toISOString().split('T')[0];
-    fechaFin = domingo.toISOString().split('T')[0];
-} else if (vista === 'mensual') {
-    // Usar el rango personalizado
-    fechaInicio = document.getElementById('fechaDesde')?.value;
-    fechaFin = document.getElementById('fechaHasta')?.value;
-    
-    if (!fechaInicio || !fechaFin) {
-        contenido.innerHTML = '<p class="text-gray-500">Por favor selecciona ambas fechas del rango</p>';
-        return;
-    }
-}
-                // Construir query base
-                let query = supabase
-                    .from('citas')
-                    .select('*')
-                    .eq('barberia_id', SUPABASE_CONFIG.barberiaId)
-                    .gte('fecha', fechaInicio)
-                    .lte('fecha', fechaFin);
-                
-                // Aplicar filtro según rol y selección
-                if (userRole === 'empleado') {
-                    query = query.eq('realizado_por_id', currentUser.id);
-                } else if (userRole === 'admin' && filtro !== 'todos') {
-                    if (filtro === 'mi') {
-                        query = query.eq('realizado_por_id', currentUser.id);
-                    } else {
-                        query = query.eq('realizado_por_id', filtro);
-                    }
-                }
-                
-                const { data: servicios, error } = await query;
-                
-                if (error) throw error;
-                
-                // Calcular totales
-                const totalRecaudado = servicios ? servicios.reduce((sum, s) => sum + parseFloat(s.monto_total || 0), 0) : 0;
-                const totalServicios = servicios ? servicios.length : 0;
-                
-                // Agrupar por forma de pago
-                const porFormaPago = servicios ? servicios.reduce((acc, s) => {
-                    acc[s.forma_pago] = (acc[s.forma_pago] || 0) + parseFloat(s.monto_total || 0);
-                    return acc;
-                }, {}) : {};
-                
-                // Obtener adelantos si es vista semanal o mensual
-                let totalAdelantos = 0;
-                if (vista !== 'diaria' && userRole === 'admin') {
-                    const { data: adelantos } = await supabase
-                        .from('adelantos')
-                        .select('monto')
-                        .eq('barberia_id', SUPABASE_CONFIG.barberiaId)
-                        .eq('activo', true)
-                        .gte('created_at', fechaInicio + 'T00:00:00')
-                        .lte('created_at', fechaFin + 'T23:59:59');
-                    
-                    if (adelantos) {
-                        totalAdelantos = adelantos.reduce((sum, a) => sum + parseFloat(a.monto || 0), 0);
-                    }
-                }
-                
-                // Mostrar resumen
-                let html = `
-                    <div class="bg-white rounded-lg shadow-lg p-6">
-                        <h3 class="text-xl font-bold mb-4">
-                            📅 Resumen ${vista === 'diaria' ? 'del Día' : vista === 'semanal' ? 'Semanal' : 'Mensual'}
-                        </h3>
-                        <p class="text-gray-600 mb-6">${fechaInicio === fechaFin ? fechaInicio : fechaInicio + ' al ' + fechaFin}</p>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                            <div class="bg-blue-50 p-4 rounded-lg">
-                                <div class="text-sm text-blue-600 mb-1">💰 Total Recaudado</div>
-                                <div class="text-2xl font-bold text-blue-900">${totalRecaudado.toLocaleString('es-CL')}</div>
-                            </div>
-                            
-                            <div class="bg-green-50 p-4 rounded-lg">
-                                <div class="text-sm text-green-600 mb-1">📊 Servicios Realizados</div>
-                                <div class="text-2xl font-bold text-green-900">${totalServicios}</div>
-                            </div>
-                `;
-                
-                if (vista !== 'diaria' && totalAdelantos > 0) {
-                    html += `
-                            <div class="bg-yellow-50 p-4 rounded-lg">
-                                <div class="text-sm text-yellow-600 mb-1">💸 Adelantos</div>
-                                <div class="text-2xl font-bold text-yellow-900">${totalAdelantos.toLocaleString('es-CL')}</div>
-                            </div>
-                            
-                            <div class="bg-purple-50 p-4 rounded-lg">
-                                <div class="text-sm text-purple-600 mb-1">💰 Total Neto</div>
-                                <div class="text-2xl font-bold text-purple-900">${(totalRecaudado - totalAdelantos).toLocaleString('es-CL')}</div>
-                            </div>
-                    `;
-                }
-                
-                html += `
-                        </div>
-                        
-                        <div class="border-t pt-4">
-                            <h4 class="font-semibold mb-3">💳 Desglose por Forma de Pago</h4>
-                            <div class="space-y-2">
-                                <div class="flex justify-between">
-                                    <span>💵 Efectivo:</span>
-                                    <span class="font-semibold">${(porFormaPago['Efectivo'] || 0).toLocaleString('es-CL')}</span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span>💳 Cuenta RUT:</span>
-                                    <span class="font-semibold">${(porFormaPago['Cuenta RUT'] || 0).toLocaleString('es-CL')}</span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span>📱 Mercado Pago:</span>
-                                    <span class="font-semibold">${(porFormaPago['Mercado Pago'] || 0).toLocaleString('es-CL')}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                
-                contenido.innerHTML = html;
-                
-            } catch (error) {
-                console.error('Error:', error);
-                contenido.innerHTML = '<div class="bg-red-100 p-4 rounded-lg text-red-700">Error al cargar el resumen. Por favor intenta nuevamente.</div>';
+                fechaInicio = lunes.toISOString().split('T')[0];
+                fechaFin = domingo.toISOString().split('T')[0];
             }
         }
+        
+        console.log(`🔍 Cargando datos: ${vista} | ${fechaInicio} al ${fechaFin}`);
+        
+        // Construir query base
+        let query = supabase
+            .from('citas')
+            .select('*')
+            .eq('barberia_id', SUPABASE_CONFIG.barberiaId)
+            .gte('fecha', fechaInicio)
+            .lte('fecha', fechaFin);
+        
+        // Aplicar filtro según rol y selección
+        if (userRole === 'empleado') {
+            query = query.eq('realizado_por_id', currentUser.id);
+        } else if (userRole === 'admin' && filtro !== 'todos') {
+            if (filtro === 'mi') {
+                query = query.eq('realizado_por_id', currentUser.id);
+            } else {
+                query = query.eq('realizado_por_id', filtro);
+            }
+        }
+        
+        const { data: servicios, error } = await query;
+        
+        if (error) throw error;
+        
+        // Calcular totales
+        const totalRecaudado = servicios ? servicios.reduce((sum, s) => sum + parseFloat(s.monto_total || 0), 0) : 0;
+        const totalServicios = servicios ? servicios.length : 0;
+        
+        // Agrupar por forma de pago
+        const porFormaPago = servicios ? servicios.reduce((acc, s) => {
+            acc[s.forma_pago] = (acc[s.forma_pago] || 0) + parseFloat(s.monto_total || 0);
+            return acc;
+        }, {}) : {};
+        
+        // Obtener adelantos si es vista semanal o mensual
+        let totalAdelantos = 0;
+        if (vista !== 'diaria' && userRole === 'admin') {
+            const { data: adelantos } = await supabase
+                .from('adelantos')
+                .select('monto')
+                .eq('barberia_id', SUPABASE_CONFIG.barberiaId)
+                .eq('activo', true)
+                .gte('created_at', fechaInicio + 'T00:00:00')
+                .lte('created_at', fechaFin + 'T23:59:59');
+            
+            if (adelantos) {
+                totalAdelantos = adelantos.reduce((sum, a) => sum + parseFloat(a.monto || 0), 0);
+            }
+        }
+        
+        // Mostrar resumen
+        let html = `
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <h3 class="text-xl font-bold mb-4">
+                    📅 Resumen ${vista === 'diaria' ? 'del Día' : vista === 'semanal' ? 'Semanal' : 'del Rango'}
+                </h3>
+                <p class="text-gray-600 mb-6">${fechaInicio === fechaFin ? fechaInicio : fechaInicio + ' al ' + fechaFin}</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div class="bg-blue-50 p-4 rounded-lg">
+                        <div class="text-sm text-blue-600 mb-1">💰 Total Recaudado</div>
+                        <div class="text-2xl font-bold text-blue-900">$${totalRecaudado.toLocaleString('es-CL')}</div>
+                    </div>
+                    
+                    <div class="bg-green-50 p-4 rounded-lg">
+                        <div class="text-sm text-green-600 mb-1">📊 Servicios Realizados</div>
+                        <div class="text-2xl font-bold text-green-900">${totalServicios}</div>
+                    </div>
+        `;
+        
+        if (vista !== 'diaria' && totalAdelantos > 0) {
+            html += `
+                    <div class="bg-yellow-50 p-4 rounded-lg">
+                        <div class="text-sm text-yellow-600 mb-1">💸 Adelantos</div>
+                        <div class="text-2xl font-bold text-yellow-900">$${totalAdelantos.toLocaleString('es-CL')}</div>
+                    </div>
+                    
+                    <div class="bg-purple-50 p-4 rounded-lg">
+                        <div class="text-sm text-purple-600 mb-1">💰 Total Neto</div>
+                        <div class="text-2xl font-bold text-purple-900">$${(totalRecaudado - totalAdelantos).toLocaleString('es-CL')}</div>
+                    </div>
+            `;
+        }
+        
+        html += `
+                </div>
+                
+                <div class="border-t pt-4">
+                    <h4 class="font-semibold mb-3">💳 Desglose por Forma de Pago</h4>
+                    <div class="space-y-2">
+                        <div class="flex justify-between">
+                            <span>💵 Efectivo:</span>
+                            <span class="font-semibold">$${(porFormaPago['Efectivo'] || 0).toLocaleString('es-CL')}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>💳 Cuenta RUT:</span>
+                            <span class="font-semibold">$${(porFormaPago['Cuenta RUT'] || 0).toLocaleString('es-CL')}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>📱 Mercado Pago:</span>
+                            <span class="font-semibold">$${(porFormaPago['Mercado Pago'] || 0).toLocaleString('es-CL')}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        contenido.innerHTML = html;
+        
+    } catch (error) {
+        console.error('❌ Error:', error);
+        contenido.innerHTML = '<div class="bg-red-100 p-4 rounded-lg text-red-700">Error al cargar el resumen. Por favor intenta nuevamente.</div>';
+    }
+}
         
        function cambiarVistaResumen() {
     const vista = document.getElementById('vistaResumen').value;
