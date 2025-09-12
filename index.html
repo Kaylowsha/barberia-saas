@@ -1370,7 +1370,7 @@ function mostrarResumenAdelantos(adelantos) {
     
     container.innerHTML = html;
 }
-
+//Funcion para boton Limpiar Semana
 async function limpiarSemanaAdelantos() {
     if (!confirm('⚠️ ¿Limpiar todos los adelantos de esta semana? Esta acción no se puede deshacer.')) {
         return;
@@ -1380,19 +1380,48 @@ async function limpiarSemanaAdelantos() {
         showLoading();
         console.log('🗑️ Limpiando adelantos de la semana...');
         
-        // Marcar como inactivos en lugar de eliminar
+        // Calcular fechas de la semana actual
+        const hoy = new Date();
+        const diaSemana = hoy.getDay();
+        const diasDesdeInicio = diaSemana === 0 ? 6 : diaSemana - 1;
+        
+        const inicioSemana = new Date(hoy);
+        inicioSemana.setDate(hoy.getDate() - diasDesdeInicio);
+        inicioSemana.setHours(0, 0, 0, 0);
+        
+        const finSemana = new Date(inicioSemana);
+        finSemana.setDate(inicioSemana.getDate() + 6);
+        finSemana.setHours(23, 59, 59, 999);
+        
+        // Marcar como inactivos los adelantos de esta semana
         const { error } = await supabase
             .from('adelantos')
             .update({ activo: false })
             .eq('barberia_id', SUPABASE_CONFIG.barberiaId)
-            .eq('activo', true);
+            .eq('activo', true)
+            .gte('created_at', inicioSemana.toISOString())
+            .lte('created_at', finSemana.toISOString());
         
         if (error) {
             console.error('❌ Error limpiando adelantos:', error);
             alert(`❌ Error al limpiar adelantos: ${error.message}`);
         } else {
             alert('✅ Adelantos de la semana limpiados correctamente');
-            cargarResumenAdelantos(); // Recargar
+            
+            // Verificar si estamos en la pestaña de gestión antes de actualizar
+            const contenedorAdelantos = document.querySelector('.adelantos-resumen');
+            if (contenedorAdelantos) {
+                // Si existe el contenedor, actualizar la vista
+                await cargarResumenAdelantos();
+            } else {
+                console.log('📋 Vista de adelantos no disponible, limpieza completada');
+            }
+            
+            // Si estamos en la pestaña de Resumen, actualizar también
+            const vistaResumen = document.getElementById('contenidoResumen');
+            if (vistaResumen) {
+                cargarDatosResumen();
+            }
         }
         
     } catch (error) {
