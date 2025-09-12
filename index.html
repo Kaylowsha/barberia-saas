@@ -659,8 +659,7 @@
             acc[s.forma_pago] = (acc[s.forma_pago] || 0) + parseFloat(s.monto_total || 0);
             return acc;
         }, {}) : {};
-        
-       // Obtener adelantos si es vista semanal o mensual
+    // Obtener adelantos si es vista semanal o mensual
 let totalAdelantos = 0;
 if (vista !== 'diaria') {
     console.log('🔍 Cargando adelantos para período...');
@@ -670,9 +669,17 @@ if (vista !== 'diaria') {
         .from('adelantos')
         .select('barbero_id, monto')
         .eq('barberia_id', SUPABASE_CONFIG.barberiaId)
-        .eq('activo', true)
         .gte('created_at', fechaInicio + 'T00:00:00')
         .lte('created_at', fechaFin + 'T23:59:59');
+    
+    // IMPORTANTE: Solo filtrar por activo si es vista SEMANAL
+    // Para vista MENSUAL, mostrar TODOS los adelantos (histórico completo)
+    if (vista === 'semanal') {
+        queryAdelantos = queryAdelantos.eq('activo', true);
+        console.log('📊 Vista semanal: solo adelantos activos');
+    } else {
+        console.log('📊 Vista mensual/rango: todos los adelantos históricos');
+    }
     
     // Aplicar filtro según rol y selección (IGUAL que servicios)
     if (userRole === 'empleado') {
