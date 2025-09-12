@@ -557,12 +557,19 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     try {
         // Obtener servicios de hoy
         const hoy = new Date().toISOString().split('T')[0];
-        const { data, error } = await supabase
-            .from('citas')
-            .select('*')
-            .eq('barberia_id', SUPABASE_CONFIG.barberiaId)
-            .eq('fecha', hoy)
-            .order('codigo_diario', { ascending: false });
+        // Filtrar según el rol
+let query = supabase
+    .from('citas')
+    .select('*')
+    .eq('barberia_id', SUPABASE_CONFIG.barberiaId)
+    .eq('fecha', hoy);
+
+// Si es empleado, solo ver SUS servicios
+if (userRole === 'empleado') {
+    query = query.eq('realizado_por_id', currentUser.id);
+}
+
+const { data, error } = await query.order('codigo_diario', { ascending: false });
         
         if (error) throw error;
         
