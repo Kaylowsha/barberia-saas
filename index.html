@@ -821,42 +821,27 @@ if (vista !== 'diaria') {
     }
 }
         
-      async function cargarBarberosEnFiltro() {
+   async function cargarBarberosEnFiltro() {
     try {
         console.log('🔍 Cargando barberos para el filtro...');
         
-        const { data: barberos, error } = await supabase
-            .from('usuarios')
-            .select('id, nombre')
-            .eq('barberia_id', SUPABASE_CONFIG.barberiaId)
-            .eq('activo', true);
+        // Usar barberos hardcodeados por problemas con RLS
+        const barberosDemo = [
+            { id: '3fbc31cc-da0a-4f4a-b45b-e7a51320c92c', nombre: 'Administrador' },
+            { id: '1a0242b8-bc7a-4e61-9e33-ac182996a950', nombre: 'Misho' }
+        ];
         
-        if (error) {
-            console.error('❌ Error RLS en tabla usuarios:', error);
-            // Usar barberos de prueba si falla la consulta
-            const barberosDefault = [
-                { id: '3fbc31cc-da0a-4f4a-b45b-e7a51320c92c', nombre: 'Administrador' },
-                { id: '1a0242b8-bc7a-4e61-9e33-ac182996a950', nombre: 'Misho' }
-            ];
-            
-            console.log('🔄 Usando barberos por defecto');
-            const select = document.getElementById('selectBarberoResumen');
-            if (!select) return;
-            
-            barberosDefault.forEach(barbero => {
-                const option = document.createElement('option');
-                option.value = barbero.id;
-                option.textContent = barbero.nombre;
-                select.appendChild(option);
-            });
-            return;
-        }
-        
-        console.log('✅ Barberos cargados:', barberos);
+        console.log('✅ Barberos cargados para filtro:', barberosDemo);
         const select = document.getElementById('selectBarberoResumen');
         if (!select) return;
         
-        barberos.forEach(barbero => {
+        // Limpiar opciones actuales (mantener las 2 primeras)
+        while (select.children.length > 2) {
+            select.removeChild(select.lastChild);
+        }
+        
+        // Agregar barberos individuales
+        barberosDemo.forEach(barbero => {
             const option = document.createElement('option');
             option.value = barbero.id;
             option.textContent = barbero.nombre;
