@@ -840,13 +840,15 @@ if (vista !== 'diaria') {
             select.removeChild(select.lastChild);
         }
         
-        // Agregar barberos individuales
-        barberosDemo.forEach(barbero => {
-            const option = document.createElement('option');
-            option.value = barbero.id;
-            option.textContent = barbero.nombre;
-            select.appendChild(option);
-        });
+       // Agregar solo empleados (no incluir admin porque ya tiene "Mi Resumen")
+barberosDemo.forEach(barbero => {
+    if (barbero.id !== currentUser.id) {  // No agregar al admin actual
+        const option = document.createElement('option');
+        option.value = barbero.id;
+        option.textContent = barbero.nombre;
+        select.appendChild(option);
+    }
+});
         
     } catch (error) {
         console.error('❌ Error crítico cargando barberos:', error);
