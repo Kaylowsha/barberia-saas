@@ -597,6 +597,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     
         
 async function loadServicios() {
+    // Establecer el contenido HTML inicial con un spinner de carga
     document.getElementById('contentArea').innerHTML = `
         <h2 class="text-2xl font-bold mb-6">
             <i class="fas fa-list mr-2"></i>Servicios
@@ -662,7 +663,6 @@ async function loadServicios() {
             '<p class="text-red-600">Error al cargar servicios</p>';
     }
 }
-
 // Función para cambiar vista del resumen
 function cambiarVistaResumen() {
     const vista = document.getElementById('vistaResumen').value;
