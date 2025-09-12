@@ -2109,45 +2109,190 @@ async function limpiarSemanaAdelantos() {
                 `;
             }
         }
+        // DISTIBUIÓN DE PAGOS
+async function filtrarMetodosPago(periodo) {
+    console.log(`💳 Filtrando métodos de pago por: ${periodo}`);
+    
+    // Actualizar estado visual de botones
+    document.querySelectorAll('.filtro-pago-btn').forEach(btn => {
+        btn.classList.remove('filtro-pago-activo', 'bg-blue-600', 'text-white');
+        btn.classList.add('bg-gray-200', 'text-gray-700');
+    });
+    
+    const btnActivo = document.getElementById(`btn-pago-${periodo}`);
+    if (btnActivo) {
+        btnActivo.classList.add('filtro-pago-activo', 'bg-blue-600', 'text-white');
+        btnActivo.classList.remove('bg-gray-200', 'text-gray-700');
+    }
+    
+    // Mostrar loading
+    const container = document.getElementById('graficoMetodosPago');
+    container.innerHTML = `
+        <div class="text-center py-4">
+            <div class="loading-spinner mx-auto"></div>
+            <p class="mt-2 text-gray-600">Analizando ${periodo === '7d' ? '7 días' : periodo === '30d' ? '30 días' : periodo === '3m' ? '3 meses' : periodo === '1y' ? '1 año' : 'todos los datos'}...</p>
+        </div>
+    `;
+    
+    try {
+        // Calcular fechas según el período
+        const hoy = new Date();
+        let fechaInicio;
         
-        function mostrarMetodosPagoOptimizado(servicios) {
-            const metodos = {};
-            let total = 0;
-            
-            servicios.forEach(s => {
-                const metodo = s.forma_pago;
-                const monto = parseFloat(s.monto_total || 0);
-                metodos[metodo] = (metodos[metodo] || 0) + monto;
-                total += monto;
-            });
-            
-            const colores = {
-                'Efectivo': 'from-green-400 to-green-600',
-                'Cuenta RUT': 'from-blue-400 to-blue-600',
-                'Mercado Pago': 'from-purple-400 to-purple-600'
-            };
-            
-            let html = '<div class="space-y-4">';
-            Object.entries(metodos).forEach(([metodo, monto]) => {
-                const porcentaje = Math.round((monto / total) * 100);
-                const color = colores[metodo] || 'from-gray-400 to-gray-600';
-                
-                html += `
-                    <div class="bg-gradient-to-r ${color} text-white p-4 rounded-lg">
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <div class="text-sm opacity-90">${metodo}</div>
-                                <div class="text-xl font-bold">$${monto.toLocaleString('es-CL')}</div>
-                            </div>
-                            <div class="text-2xl font-bold">${porcentaje}%</div>
-                        </div>
-                    </div>
-                `;
-            });
-            html += '</div>';
-            
-            document.getElementById('metodosPago').innerHTML = html;
+        switch(periodo) {
+            case '7d':
+                fechaInicio = new Date();
+                fechaInicio.setDate(hoy.getDate() - 7);
+                break;
+            case '30d':
+                fechaInicio = new Date();
+                fechaInicio.setDate(hoy.getDate() - 30);
+                break;
+            case '3m':
+                fechaInicio = new Date();
+                fechaInicio.setMonth(hoy.getMonth() - 3);
+                break;
+            case '1y':
+                fechaInicio = new Date();
+                fechaInicio.setFullYear(hoy.getFullYear() - 1);
+                break;
+            case 'todo':
+                fechaInicio = new Date('2020-01-01'); // Fecha muy antigua
+                break;
         }
+        
+        const fechaFin = hoy.toISOString().split('T')[0];
+        const fechaInicioStr = fechaInicio.toISOString().split('T')[0];
+        
+        console.log(`📅 Consultando métodos desde ${fechaInicioStr} hasta ${fechaFin}`);
+        
+        // Cargar servicios del período
+        const { data: servicios, error } = await supabase
+            .from('citas')
+            .select('forma_pago, monto_total')
+            .eq('barberia_id', SUPABASE_CONFIG.barberiaId)
+            .gte('fecha', fechaInicioStr)
+            .lte('fecha', fechaFin);
+        
+        if (error) throw error;
+        
+        if (!servicios || servicios.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-8 text-gray-500">
+                    <div class="text-4xl mb-2">💳</div>
+                    <p>No hay pagos registrados en ${periodo === '7d' ? 'los últimos 7 días' : periodo === '30d' ? 'los últimos 30 días' : periodo === '3m' ? 'los últimos 3 meses' : periodo === '1y' ? 'el último año' : 'el histórico'}</p>
+                </div>
+            `;
+            return;
+        }
+        
+        // Procesar datos de métodos de pago
+        const metodos = {};
+        let total = 0;
+        
+        servicios.forEach(s => {
+            const metodo = s.forma_pago;
+            const monto = parseFloat(s.monto_total || 0);
+            metodos[metodo] = (metodos[metodo] || 0) + monto;
+            total += monto;
+        });
+        
+        if (total === 0) {
+            container.innerHTML = `
+                <div class="text-center py-8 text-gray-500">
+                    <p>No hay datos suficientes para mostrar</p>
+                </div>
+            `;
+            return;
+        }
+        
+        // Generar gráfico
+        const colores = {
+            'Efectivo': 'from-green-400 to-green-600',
+            'Cuenta RUT': 'from-blue-400 to-blue-600',
+            'Mercado Pago': 'from-purple-400 to-purple-600'
+        };
+        
+        let html = '<div class="space-y-4">';
+        Object.entries(metodos).forEach(([metodo, monto]) => {
+            const porcentaje = Math.round((monto / total) * 100);
+            const color = colores[metodo] || 'from-gray-400 to-gray-600';
+            
+            html += `
+                <div class="bg-gradient-to-r ${color} text-white p-4 rounded-lg">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <div class="text-sm opacity-90">${metodo}</div>
+                            <div class="text-xl font-bold">$${monto.toLocaleString('es-CL')}</div>
+                        </div>
+                        <div class="text-2xl font-bold">${porcentaje}%</div>
+                    </div>
+                </div>
+            `;
+        });
+        html += '</div>';
+        
+        // Agregar resumen del período
+        html += `
+            <div class="mt-4 pt-4 border-t border-gray-200">
+                <div class="text-xs text-gray-500 text-center">
+                    💳 Total analizado: <span class="font-semibold">$${total.toLocaleString('es-CL')}</span> en 
+                    <span class="font-semibold">${periodo === '7d' ? '7 días' : periodo === '30d' ? '30 días' : periodo === '3m' ? '3 meses' : periodo === '1y' ? '1 año' : 'todo el histórico'}</span>
+                </div>
+            </div>
+        `;
+        
+        container.innerHTML = html;
+        
+    } catch (error) {
+        console.error('❌ Error filtrando métodos de pago:', error);
+        container.innerHTML = `
+            <div class="text-center py-4 text-red-600">
+                <div class="text-2xl mb-2">⚠️</div>
+                <p>Error al cargar datos del período</p>
+            </div>
+        `;
+    }
+}
+
+        // Mostrar Métodos de pago
+      function mostrarMetodosPagoOptimizado(servicios) {
+    // Mostrar botones de filtro y contenido inicial
+    const container = document.getElementById('metodosPago');
+    
+    container.innerHTML = `
+        <!-- Botones de Filtro -->
+        <div class="flex flex-wrap gap-2 mb-4 justify-center">
+            <button onclick="filtrarMetodosPago('7d')" id="btn-pago-7d" class="filtro-pago-btn filtro-pago-activo px-3 py-1 text-sm rounded-full bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors">
+                7 días
+            </button>
+            <button onclick="filtrarMetodosPago('30d')" id="btn-pago-30d" class="filtro-pago-btn px-3 py-1 text-sm rounded-full bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors">
+                30 días
+            </button>
+            <button onclick="filtrarMetodosPago('3m')" id="btn-pago-3m" class="filtro-pago-btn px-3 py-1 text-sm rounded-full bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors">
+                3 meses
+            </button>
+            <button onclick="filtrarMetodosPago('1y')" id="btn-pago-1y" class="filtro-pago-btn px-3 py-1 text-sm rounded-full bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors">
+                1 año
+            </button>
+            <button onclick="filtrarMetodosPago('todo')" id="btn-pago-todo" class="filtro-pago-btn px-3 py-1 text-sm rounded-full bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors">
+                Siempre
+            </button>
+        </div>
+        
+        <!-- Contenedor del Gráfico -->
+        <div id="graficoMetodosPago">
+            <div class="text-center py-4">
+                <div class="loading-spinner mx-auto"></div>
+                <p class="mt-2 text-gray-600">Cargando métodos...</p>
+            </div>
+        </div>
+    `;
+    
+    // Guardar servicios para filtros y cargar datos inicial (7 días)
+    window.serviciosGlobalesMetodos = servicios;
+    filtrarMetodosPago('7d');
+}
         
         function mostrarProductividadOptimizada(servicios) {
             const barberos = {};
