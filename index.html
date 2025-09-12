@@ -660,21 +660,44 @@
             return acc;
         }, {}) : {};
         
-        // Obtener adelantos si es vista semanal o mensual
-        let totalAdelantos = 0;
-        if (vista !== 'diaria' && userRole === 'admin') {
-            const { data: adelantos } = await supabase
-                .from('adelantos')
-                .select('monto')
-                .eq('barberia_id', SUPABASE_CONFIG.barberiaId)
-                .eq('activo', true)
-                .gte('created_at', fechaInicio + 'T00:00:00')
-                .lte('created_at', fechaFin + 'T23:59:59');
-            
-            if (adelantos) {
-                totalAdelantos = adelantos.reduce((sum, a) => sum + parseFloat(a.monto || 0), 0);
-            }
+       // Obtener adelantos si es vista semanal o mensual
+let totalAdelantos = 0;
+if (vista !== 'diaria') {
+    console.log('🔍 Cargando adelantos para período...');
+    
+    // Construir query de adelantos con filtro por barbero
+    let queryAdelantos = supabase
+        .from('adelantos')
+        .select('barbero_id, monto')
+        .eq('barberia_id', SUPABASE_CONFIG.barberiaId)
+        .eq('activo', true)
+        .gte('created_at', fechaInicio + 'T00:00:00')
+        .lte('created_at', fechaFin + 'T23:59:59');
+    
+    // Aplicar filtro según rol y selección (IGUAL que servicios)
+    if (userRole === 'empleado') {
+        // Empleado: solo SUS adelantos
+        queryAdelantos = queryAdelantos.eq('barbero_id', currentUser.id);
+    } else if (userRole === 'admin' && filtro !== 'todos') {
+        if (filtro === 'mi') {
+            // Admin "Mi resumen": solo SUS adelantos
+            queryAdelantos = queryAdelantos.eq('barbero_id', currentUser.id);
+        } else {
+            // Admin filtro específico: adelantos de ESE barbero
+            queryAdelantos = queryAdelantos.eq('barbero_id', filtro);
         }
+    }
+    // Si es admin con "todos": no agregar filtro (ver adelantos de todos)
+    
+    const { data: adelantos, error: errorAdelantos } = await queryAdelantos;
+    
+    if (errorAdelantos) {
+        console.error('❌ Error cargando adelantos:', errorAdelantos);
+    } else if (adelantos) {
+        totalAdelantos = adelantos.reduce((sum, a) => sum + parseFloat(a.monto || 0), 0);
+        console.log('💰 Adelantos filtrados:', adelantos.length, 'Total:', totalAdelantos);
+    }
+}
         
         // Mostrar resumen
         let html = `
