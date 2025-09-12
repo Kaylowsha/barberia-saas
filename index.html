@@ -594,56 +594,73 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
             
        
         
-        function loadResumen() {
-         <div id="resumen" class="tab-content">
-    <h2>📊 Resumen</h2>
     
-    <!-- Selector de Vista -->
-    <div class="form-group">
-        <label>Seleccionar Vista:</label>
-        <select id="vistaResumen" class="form-control" onchange="cambiarVistaResumen()">
-            <option value="diaria">Vista Diaria</option>
-            <option value="semanal">Vista Semanal</option>
-            <option value="mensual">Vista Mensual</option>
-        </select>
-    </div>
-
-    <!-- Filtro de Barbero (solo para admin) -->
-    <div id="filtroBarberoResumen" class="form-group" style="display:none;">
-        <label>Filtrar por Barbero:</label>
-        <select id="selectBarberoResumen" class="form-control" onchange="cargarResumen()">
-            <option value="todos">Ver Todos</option>
-            <option value="mi">Mi Resumen</option>
-        </select>
-    </div>
-
-    <!-- Selector de Fecha -->
-    <div class="form-group">
-        <label id="labelFechaResumen">Fecha:</label>
-        <input type="date" id="fechaResumen" class="form-control" onchange="cargarResumen()">
-    </div>
-
-    <!-- Contenedor del Resumen -->
-    <div id="contenidoResumen" style="margin-top: 20px;">
-        <div class="loading">Cargando resumen...</div>
-    </div>
-</div>
         
-      // Función para cargar resumen
-async function loadResumen() {
-    console.log('Cargando resumen...');
-    
-    // Configurar fecha inicial
-    document.getElementById('fechaResumen').value = new Date().toISOString().split('T')[0];
-    
-    // Si es admin, mostrar filtro de barberos
-    if (currentUser.role === 'admin') {
-        document.getElementById('filtroBarberoResumen').style.display = 'block';
-        await cargarBarberosEnFiltro();
+async function loadServicios() {
+    document.getElementById('contentArea').innerHTML = `
+        <h2 class="text-2xl font-bold mb-6">
+            <i class="fas fa-list mr-2"></i>Servicios
+        </h2>
+        <div id="serviciosLista" class="mt-6">
+            <div class="flex justify-center">
+                <div class="loading-spinner mx-auto"></div>
+                <p class="mt-4 text-gray-600">Cargando servicios...</p>
+            </div>
+        </div>
+    `;
+
+    try {
+        // Obtener servicios de hoy
+        const hoy = new Date().toISOString().split('T')[0];
+        let query = supabase
+            .from('citas')
+            .select('*')
+            .eq('barberia_id', SUPABASE_CONFIG.barberiaId)
+            .eq('fecha', hoy);
+
+        // Si es empleado, solo ver SUS servicios
+        if (userRole === 'empleado') {
+            query = query.eq('realizado_por_id', currentUser.id);
+        }
+
+        const { data, error } = await query.order('codigo_diario', { ascending: false });
+
+        if (error) throw error;
+
+        const listaHTML = data && data.length > 0 ?
+            `<div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Código</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Barbero</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Servicio</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Monto</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Pago</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        ${data.map(s => `
+                            <tr>
+                                <td class="px-4 py-2 text-sm">#${s.codigo_diario}</td>
+                                <td class="px-4 py-2 text-sm">${s.realizado_por_nombre}</td>
+                                <td class="px-4 py-2 text-sm">${s.servicio_principal_nombre}</td>
+                                <td class="px-4 py-2 text-sm font-semibold">$${s.monto_total.toLocaleString('es-CL')}</td>
+                                <td class="px-4 py-2 text-sm">${s.forma_pago}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>`
+            : '<p class="text-gray-500">No hay servicios registrados hoy.</p>';
+
+        document.getElementById('serviciosLista').innerHTML = listaHTML;
+
+    } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('serviciosLista').innerHTML =
+            '<p class="text-red-600">Error al cargar servicios</p>';
     }
-    
-    // Cargar datos del resumen
-    await cargarResumen();
 }
 
 // Función para cambiar vista del resumen
