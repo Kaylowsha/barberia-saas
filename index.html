@@ -741,79 +741,61 @@
     }
 }
         
-      function cambiarVistaResumen() {
-    const vista = document.getElementById('vistaResumen').value;
-    const fechaContainer = document.getElementById('contenedorFechas');
+    function cambiarVistaResumen() {
+    var vista = document.getElementById('vistaResumen').value;
+    var fechaContainer = document.getElementById('contenedorFechas');
     
     if (!fechaContainer) {
-        console.error('❌ No se encontró el contenedor de fechas');
+        console.error('No se encontró el contenedor de fechas');
         return;
     }
     
-    console.log('🔄 Cambiando vista a: ' + vista);
+    console.log('Cambiando vista a: ' + vista);
     
-    switch(vista) {
-        case 'diaria':
-            fechaContainer.innerHTML = `
-                <label id="labelFechaResumen" class="block text-sm font-medium text-gray-700 mb-2">Fecha:</label>
-                <input type="date" id="fechaResumen" class="w-full px-4 py-2 border border-gray-300 rounded-lg" onchange="cargarDatosResumen()">
-            `;
-            
-            setTimeout(function() {
-                const fechaInput = document.getElementById('fechaResumen');
-                if (fechaInput) {
-                    fechaInput.value = new Date().toISOString().split('T')[0];
-                    cargarDatosResumen();
-                }
-            }, 100);
-            break;
-            
-        case 'semanal':
-            fechaContainer.innerHTML = `
-                <label id="labelFechaResumen" class="block text-sm font-medium text-gray-700 mb-2">Seleccionar cualquier día de la semana:</label>
-                <input type="date" id="fechaResumen" class="w-full px-4 py-2 border border-gray-300 rounded-lg" onchange="cargarDatosResumen()">
-            `;
-            
-            setTimeout(function() {
-                const fechaInput = document.getElementById('fechaResumen');
-                if (fechaInput) {
-                    fechaInput.value = new Date().toISOString().split('T')[0];
-                    cargarDatosResumen();
-                }
-            }, 100);
-            break;
-            
-        case 'mensual':
-            fechaContainer.innerHTML = `
-                <label class="block text-sm font-medium text-gray-700 mb-2">Rango de fechas:</label>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="text-xs text-gray-600">Desde:</label>
-                        <input type="date" id="fechaDesde" class="w-full px-4 py-2 border border-gray-300 rounded-lg" onchange="cargarDatosResumen()">
-                    </div>
-                    <div>
-                        <label class="text-xs text-gray-600">Hasta:</label>
-                        <input type="date" id="fechaHasta" class="w-full px-4 py-2 border border-gray-300 rounded-lg" onchange="cargarDatosResumen()">
-                    </div>
-                </div>
-            `;
-            
-            setTimeout(function() {
-                const fechaDesde = document.getElementById('fechaDesde');
-                const fechaHasta = document.getElementById('fechaHasta');
-                if (fechaDesde && fechaHasta) {
-                    const now = new Date();
-                    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-                    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-                    fechaDesde.value = firstDay.toISOString().split('T')[0];
-                    fechaHasta.value = lastDay.toISOString().split('T')[0];
-                    cargarDatosResumen();
-                }
-            }, 100);
-            break;
+    if (vista === 'diaria') {
+        fechaContainer.innerHTML = '<label id="labelFechaResumen" class="block text-sm font-medium text-gray-700 mb-2">Fecha:</label><input type="date" id="fechaResumen" class="w-full px-4 py-2 border border-gray-300 rounded-lg" onchange="cargarDatosResumen()">';
+        
+        setTimeout(function() {
+            var fechaInput = document.getElementById('fechaResumen');
+            if (fechaInput) {
+                fechaInput.value = new Date().toISOString().split('T')[0];
+                cargarDatosResumen();
+            }
+        }, 100);
+    } else if (vista === 'semanal') {
+        fechaContainer.innerHTML = '<label id="labelFechaResumen" class="block text-sm font-medium text-gray-700 mb-2">Seleccionar cualquier día de la semana:</label><input type="date" id="fechaResumen" class="w-full px-4 py-2 border border-gray-300 rounded-lg" onchange="cargarDatosResumen()">';
+        
+        setTimeout(function() {
+            var fechaInput = document.getElementById('fechaResumen');
+            if (fechaInput) {
+                fechaInput.value = new Date().toISOString().split('T')[0];
+                cargarDatosResumen();
+            }
+        }, 100);
+    } else if (vista === 'mensual') {
+        var html = '<label class="block text-sm font-medium text-gray-700 mb-2">Rango de fechas:</label>';
+        html += '<div class="grid grid-cols-2 gap-4">';
+        html += '<div><label class="text-xs text-gray-600">Desde:</label>';
+        html += '<input type="date" id="fechaDesde" class="w-full px-4 py-2 border border-gray-300 rounded-lg" onchange="cargarDatosResumen()"></div>';
+        html += '<div><label class="text-xs text-gray-600">Hasta:</label>';
+        html += '<input type="date" id="fechaHasta" class="w-full px-4 py-2 border border-gray-300 rounded-lg" onchange="cargarDatosResumen()"></div>';
+        html += '</div>';
+        
+        fechaContainer.innerHTML = html;
+        
+        setTimeout(function() {
+            var fechaDesde = document.getElementById('fechaDesde');
+            var fechaHasta = document.getElementById('fechaHasta');
+            if (fechaDesde && fechaHasta) {
+                var now = new Date();
+                var firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+                var lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+                fechaDesde.value = firstDay.toISOString().split('T')[0];
+                fechaHasta.value = lastDay.toISOString().split('T')[0];
+                cargarDatosResumen();
+            }
+        }, 100);
     }
-}
-    cargarDatosResumen();
 }
         
       async function cargarBarberosEnFiltro() {
