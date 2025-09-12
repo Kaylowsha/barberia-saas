@@ -1456,23 +1456,361 @@ async function confirmarEliminarServicio(servicioId, codigo) {
             
             contenido.innerHTML = html;
         }    
-        function loadEstadisticas() {
+    function loadEstadisticas() {
+            console.log('🔍 Cargando estadísticas...');
+            
+            // Verificar que sea admin
             if (userRole !== 'admin') {
-                document.getElementById('contentArea').innerHTML = `
-                    <p class="text-red-600">No tienes permisos para ver esta sección.</p>
-                `;
+                document.getElementById('contentArea').innerHTML = '<div class="text-red-600">❌ Sin permisos de administrador</div>';
                 return;
             }
             
             document.getElementById('contentArea').innerHTML = `
-                <h2 class="text-2xl font-bold mb-6">
-                    <i class="fas fa-chart-line mr-2"></i>Estadísticas
-                </h2>
-                <p class="text-gray-600">Visualiza las estadísticas del negocio...</p>
-                <div class="mt-6 p-4 bg-yellow-50 rounded-lg">
-                    <p class="text-yellow-800">Esta sección está en desarrollo.</p>
+                <div class="max-w-7xl mx-auto">
+                    <h2 class="text-2xl font-bold mb-6">
+                        <i class="fas fa-chart-line mr-2"></i>Estadísticas y Análisis
+                    </h2>
+                    
+                    <!-- Gráficos Principales -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                        <!-- Top Servicios -->
+                        <div class="bg-white p-6 rounded-lg shadow border">
+                            <h3 class="text-lg font-bold mb-4">🔥 Servicios Más Populares (7 días)</h3>
+                            <div id="topServicios">
+                                <div class="text-center py-6">
+                                    <div class="loading-spinner mx-auto"></div>
+                                    <p class="mt-4 text-gray-600">Analizando popularidad...</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Métodos de Pago -->
+                        <div class="bg-white p-6 rounded-lg shadow border">
+                            <h3 class="text-lg font-bold mb-4">💳 Distribución de Pagos (7 días)</h3>
+                            <div id="metodosPago">
+                                <div class="text-center py-6">
+                                    <div class="loading-spinner mx-auto"></div>
+                                    <p class="mt-4 text-gray-600">Calculando métodos...</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Productividad por Barbero -->
+                        <div class="bg-white p-6 rounded-lg shadow border">
+                            <h3 class="text-lg font-bold mb-4">👨‍💼 Productividad por Barbero (7 días)</h3>
+                            <div id="productividadBarberos">
+                                <div class="text-center py-6">
+                                    <div class="loading-spinner mx-auto"></div>
+                                    <p class="mt-4 text-gray-600">Midiendo rendimiento...</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Tendencia Semanal -->
+                        <div class="bg-white p-6 rounded-lg shadow border">
+                            <h3 class="text-lg font-bold mb-4">📅 Ingresos por Día (7 días)</h3>
+                            <div id="tendenciaSemanal">
+                                <div class="text-center py-6">
+                                    <div class="loading-spinner mx-auto"></div>
+                                    <p class="mt-4 text-gray-600">Analizando tendencias...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Insights Inteligentes -->
+                    <div class="bg-gradient-to-r from-indigo-500 to-purple-600 text-white p-6 rounded-lg shadow-lg">
+                        <h3 class="text-xl font-bold mb-4">🎯 Insights del Negocio</h3>
+                        <div id="insightsInteligentes">
+                            <div class="text-center py-4">
+                                <div class="loading-spinner mx-auto"></div>
+                                <p class="mt-2 text-indigo-100">Generando análisis inteligente...</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             `;
+            
+            // Cargar estadísticas
+            setTimeout(() => cargarEstadisticasOptimizadas(), 500);
+        }
+        
+        async function cargarEstadisticasOptimizadas() {
+            console.log('📊 Cargando estadísticas optimizadas...');
+            
+            try {
+                // Últimos 7 días
+                const hoy = new Date();
+                const hace7Dias = new Date();
+                hace7Dias.setDate(hoy.getDate() - 7);
+                
+                const fechaInicio = hace7Dias.toISOString().split('T')[0];
+                const fechaFin = hoy.toISOString().split('T')[0];
+                
+                // Cargar servicios
+                const { data: servicios, error } = await supabase
+                    .from('citas')
+                    .select('*')
+                    .eq('barberia_id', SUPABASE_CONFIG.barberiaId)
+                    .gte('fecha', fechaInicio)
+                    .lte('fecha', fechaFin);
+                
+                if (error) throw error;
+                
+                if (!servicios || servicios.length === 0) {
+                    mostrarSinDatos();
+                    return;
+                }
+                
+                console.log(`✅ ${servicios.length} servicios para analizar`);
+                
+                // Procesar y mostrar cada sección
+                mostrarTopServiciosOptimizado(servicios);
+                mostrarMetodosPagoOptimizado(servicios);
+                mostrarProductividadOptimizada(servicios);
+                mostrarTendenciaOptimizada(servicios);
+                mostrarInsightsOptimizados(servicios);
+                
+            } catch (error) {
+                console.error('❌ Error:', error);
+                mostrarErrorEstadisticas();
+            }
+        }
+        
+        function mostrarTopServiciosOptimizado(servicios) {
+            const conteoServicios = {};
+            servicios.forEach(s => {
+                const servicio = s.servicio_principal_nombre;
+                conteoServicios[servicio] = (conteoServicios[servicio] || 0) + 1;
+            });
+            
+            const top5 = Object.entries(conteoServicios)
+                .sort(([,a], [,b]) => b - a)
+                .slice(0, 5);
+            
+            const maxCount = top5[0]?.[1] || 1;
+            
+            let html = '<div class="space-y-3">';
+            top5.forEach(([servicio, cantidad]) => {
+                const porcentaje = Math.round((cantidad / servicios.length) * 100);
+                const barWidth = Math.round((cantidad / maxCount) * 100);
+                
+                html += `
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="text-sm font-medium text-gray-700 flex-1">
+                            ${servicio.length > 20 ? servicio.substring(0, 20) + '...' : servicio}
+                        </div>
+                        <div class="text-sm text-gray-500 ml-2">${cantidad} (${porcentaje}%)</div>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-3">
+                        <div class="bg-gradient-to-r from-orange-400 to-red-500 h-3 rounded-full transition-all duration-1000" style="width: ${barWidth}%"></div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            
+            document.getElementById('topServicios').innerHTML = html;
+        }
+        
+        function mostrarMetodosPagoOptimizado(servicios) {
+            const metodos = {};
+            let total = 0;
+            
+            servicios.forEach(s => {
+                const metodo = s.forma_pago;
+                const monto = parseFloat(s.monto_total || 0);
+                metodos[metodo] = (metodos[metodo] || 0) + monto;
+                total += monto;
+            });
+            
+            const colores = {
+                'Efectivo': 'from-green-400 to-green-600',
+                'Cuenta RUT': 'from-blue-400 to-blue-600',
+                'Mercado Pago': 'from-purple-400 to-purple-600'
+            };
+            
+            let html = '<div class="space-y-4">';
+            Object.entries(metodos).forEach(([metodo, monto]) => {
+                const porcentaje = Math.round((monto / total) * 100);
+                const color = colores[metodo] || 'from-gray-400 to-gray-600';
+                
+                html += `
+                    <div class="bg-gradient-to-r ${color} text-white p-4 rounded-lg">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <div class="text-sm opacity-90">${metodo}</div>
+                                <div class="text-xl font-bold">$${monto.toLocaleString('es-CL')}</div>
+                            </div>
+                            <div class="text-2xl font-bold">${porcentaje}%</div>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            
+            document.getElementById('metodosPago').innerHTML = html;
+        }
+        
+        function mostrarProductividadOptimizada(servicios) {
+            const barberos = {};
+            servicios.forEach(s => {
+                const barbero = s.realizado_por_nombre;
+                if (!barberos[barbero]) {
+                    barberos[barbero] = { servicios: 0, monto: 0 };
+                }
+                barberos[barbero].servicios++;
+                barberos[barbero].monto += parseFloat(s.monto_total || 0);
+            });
+            
+            const barberosArray = Object.entries(barberos)
+                .sort(([,a], [,b]) => b.servicios - a.servicios);
+            
+            const coloresBarberos = ['from-blue-500 to-indigo-600', 'from-green-500 to-teal-600', 'from-purple-500 to-pink-600'];
+            
+            let html = '<div class="space-y-3">';
+            barberosArray.forEach(([barbero, data], index) => {
+                const porcentajeServicios = Math.round((data.servicios / servicios.length) * 100);
+                const promedioPorServicio = Math.round(data.monto / data.servicios);
+                const color = coloresBarberos[index] || 'from-gray-500 to-gray-600';
+                
+                html += `
+                    <div class="bg-gradient-to-r ${color} text-white p-4 rounded-lg">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <div class="font-bold text-lg">${barbero}</div>
+                                <div class="text-sm opacity-90">${data.servicios} servicios (${porcentajeServicios}%)</div>
+                                <div class="text-sm opacity-90">Promedio: $${promedioPorServicio.toLocaleString('es-CL')}/servicio</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-xl font-bold">$${data.monto.toLocaleString('es-CL')}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            
+            document.getElementById('productividadBarberos').innerHTML = html;
+        }
+        
+        function mostrarTendenciaOptimizada(servicios) {
+            const porDia = {};
+            servicios.forEach(s => {
+                const fecha = s.fecha;
+                if (!porDia[fecha]) {
+                    porDia[fecha] = { servicios: 0, monto: 0 };
+                }
+                porDia[fecha].servicios++;
+                porDia[fecha].monto += parseFloat(s.monto_total || 0);
+            });
+            
+            const dias = Object.entries(porDia)
+                .sort(([a], [b]) => a.localeCompare(b))
+                .map(([fecha, data]) => ({
+                    fecha,
+                    dia: new Date(fecha + 'T00:00:00').toLocaleDateString('es-CL', { weekday: 'short', day: 'numeric' }),
+                    servicios: data.servicios,
+                    monto: data.monto
+                }));
+            
+            const maxMonto = Math.max(...dias.map(d => d.monto));
+            
+            let html = '<div class="space-y-3">';
+            dias.forEach(dia => {
+                const altura = maxMonto > 0 ? Math.round((dia.monto / maxMonto) * 100) : 0;
+                const intensidad = altura > 80 ? 'from-red-400 to-red-600' : 
+                                  altura > 60 ? 'from-orange-400 to-orange-600' :
+                                  altura > 40 ? 'from-yellow-400 to-yellow-600' : 'from-green-400 to-green-600';
+                
+                html += `
+                    <div class="flex items-center space-x-3">
+                        <div class="w-16 text-sm font-medium text-gray-700">${dia.dia}</div>
+                        <div class="flex-1 bg-gray-200 rounded-full h-6 relative">
+                            <div class="bg-gradient-to-r ${intensidad} h-6 rounded-full transition-all duration-1000" style="width: ${altura}%"></div>
+                            <div class="absolute inset-0 flex items-center justify-center">
+                                <span class="text-xs font-bold text-white">${dia.servicios} - $${Math.round(dia.monto/1000)}k</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            
+            document.getElementById('tendenciaSemanal').innerHTML = html;
+        }
+        
+        function mostrarInsightsOptimizados(servicios) {
+            // Calcular insights
+            const totalMonto = servicios.reduce((sum, s) => sum + parseFloat(s.monto_total || 0), 0);
+            const promedioServicio = Math.round(totalMonto / servicios.length);
+            
+            // Día con más servicios
+            const porDia = {};
+            servicios.forEach(s => {
+                porDia[s.fecha] = (porDia[s.fecha] || 0) + 1;
+            });
+            
+            const mejorDia = Object.entries(porDia)
+                .sort(([,a], [,b]) => b - a)[0];
+            
+            const diaNombre = mejorDia ? new Date(mejorDia[0] + 'T00:00:00').toLocaleDateString('es-CL', { weekday: 'long' }) : 'N/A';
+            
+            // Servicio más popular
+            const serviciosCount = {};
+            servicios.forEach(s => {
+                serviciosCount[s.servicio_principal_nombre] = (serviciosCount[s.servicio_principal_nombre] || 0) + 1;
+            });
+            
+            const servicioTop = Object.entries(serviciosCount)
+                .sort(([,a], [,b]) => b - a)[0];
+            
+            // Barbero más productivo
+            const barberoStats = {};
+            servicios.forEach(s => {
+                barberoStats[s.realizado_por_nombre] = (barberoStats[s.realizado_por_nombre] || 0) + 1;
+            });
+            
+            const topBarbero = Object.entries(barberoStats)
+                .sort(([,a], [,b]) => b - a)[0];
+            
+            const insights = [
+                `💰 Ticket promedio por servicio: $${promedioServicio.toLocaleString('es-CL')}`,
+                `🗓️ Tu mejor día de la semana es: ${diaNombre} (${mejorDia?.[1] || 0} servicios)`,
+                `🔥 Servicio estrella: "${servicioTop?.[0] || 'N/A'}" (${servicioTop?.[1] || 0} veces)`,
+                `🏆 Barbero más activo: ${topBarbero?.[0] || 'N/A'} (${topBarbero?.[1] || 0} servicios)`
+            ];
+            
+            let html = '<div class="grid grid-cols-1 md:grid-cols-2 gap-4">';
+            insights.forEach(insight => {
+                html += `
+                    <div class="bg-white bg-opacity-20 p-4 rounded-lg">
+                        <div class="text-white font-medium">${insight}</div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            
+            document.getElementById('insightsInteligentes').innerHTML = html;
+        }
+        
+        function mostrarSinDatos() {
+            const elementos = ['topServicios', 'metodosPago', 'productividadBarberos', 'tendenciaSemanal', 'insightsInteligentes'];
+            elementos.forEach(id => {
+                const elemento = document.getElementById(id);
+                if (elemento) {
+                    elemento.innerHTML = '<div class="text-center py-8 text-gray-500">📊 Sin datos suficientes para mostrar estadísticas</div>';
+                }
+            });
+        }
+        
+        function mostrarErrorEstadisticas() {
+            const elementos = ['topServicios', 'metodosPago', 'productividadBarberos', 'tendenciaSemanal', 'insightsInteligentes'];
+            elementos.forEach(id => {
+                const elemento = document.getElementById(id);
+                if (elemento) {
+                    elemento.innerHTML = '<div class="text-center py-4 text-red-600">❌ Error al cargar estadísticas</div>';
+                }
+            });
         }
         
         // ===============================
