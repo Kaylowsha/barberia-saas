@@ -1577,39 +1577,201 @@ async function confirmarEliminarServicio(servicioId, codigo) {
             }
         }
         
-        function mostrarTopServiciosOptimizado(servicios) {
-            const conteoServicios = {};
-            servicios.forEach(s => {
-                const servicio = s.servicio_principal_nombre;
-                conteoServicios[servicio] = (conteoServicios[servicio] || 0) + 1;
+       function mostrarTopServiciosOptimizado(servicios) {
+            // Mostrar botones de filtro y contenido inicial
+            const container = document.getElementById('topServicios');
+            
+            container.innerHTML = `
+                <!-- Botones de Filtro -->
+                <div class="flex flex-wrap gap-2 mb-4 justify-center">
+                    <button onclick="filtrarTopServicios('7d')" id="btn-7d" class="filtro-btn filtro-activo px-3 py-1 text-sm rounded-full bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors">
+                        7 días
+                    </button>
+                    <button onclick="filtrarTopServicios('30d')" id="btn-30d" class="filtro-btn px-3 py-1 text-sm rounded-full bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors">
+                        30 días
+                    </button>
+                    <button onclick="filtrarTopServicios('3m')" id="btn-3m" class="filtro-btn px-3 py-1 text-sm rounded-full bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors">
+                        3 meses
+                    </button>
+                    <button onclick="filtrarTopServicios('1y')" id="btn-1y" class="filtro-btn px-3 py-1 text-sm rounded-full bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors">
+                        1 año
+                    </button>
+                    <button onclick="filtrarTopServicios('todo')" id="btn-todo" class="filtro-btn px-3 py-1 text-sm rounded-full bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors">
+                        Siempre
+                    </button>
+                </div>
+                
+                <!-- Contenedor del Gráfico -->
+                <div id="graficoTopServicios">
+                    <div class="text-center py-4">
+                        <div class="loading-spinner mx-auto"></div>
+                        <p class="mt-2 text-gray-600">Cargando servicios...</p>
+                    </div>
+                </div>
+            `;
+            
+            // Cargar datos inicial (7 días)
+            window.serviciosGlobalesStats = servicios; // Guardar para uso posterior
+            filtrarTopServicios('7d');
+        }
+        
+        async function filtrarTopServicios(periodo) {
+            console.log(`📊 Filtrando top servicios por: ${periodo}`);
+            
+            // Actualizar estado visual de botones
+            document.querySelectorAll('.filtro-btn').forEach(btn => {
+                btn.classList.remove('filtro-activo', 'bg-blue-600', 'text-white');
+                btn.classList.add('bg-gray-200', 'text-gray-700');
             });
             
-            const top5 = Object.entries(conteoServicios)
-                .sort(([,a], [,b]) => b - a)
-                .slice(0, 5);
+            const btnActivo = document.getElementById(`btn-${periodo}`);
+            if (btnActivo) {
+                btnActivo.classList.add('filtro-activo', 'bg-blue-600', 'text-white');
+                btnActivo.classList.remove('bg-gray-200', 'text-gray-700');
+            }
             
-            const maxCount = top5[0]?.[1] || 1;
+            // Mostrar loading
+            const container = document.getElementById('graficoTopServicios');
+            container.innerHTML = `
+                <div class="text-center py-4">
+                    <div class="loading-spinner mx-auto"></div>
+                    <p class="mt-2 text-gray-600">Analizando ${periodo === '7d' ? '7 días' : periodo === '30d' ? '30 días' : periodo === '3m' ? '3 meses' : periodo === '1y' ? '1 año' : 'todos los datos'}...</p>
+                </div>
+            `;
             
-            let html = '<div class="space-y-3">';
-            top5.forEach(([servicio, cantidad]) => {
-                const porcentaje = Math.round((cantidad / servicios.length) * 100);
-                const barWidth = Math.round((cantidad / maxCount) * 100);
+            try {
+                // Calcular fechas según el período
+                const hoy = new Date();
+                let fechaInicio;
                 
-                html += `
-                    <div class="flex items-center justify-between mb-2">
-                        <div class="text-sm font-medium text-gray-700 flex-1">
-                            ${servicio.length > 20 ? servicio.substring(0, 20) + '...' : servicio}
+                switch(periodo) {
+                    case '7d':
+                        fechaInicio = new Date();
+                        fechaInicio.setDate(hoy.getDate() - 7);
+                        break;
+                    case '30d':
+                        fechaInicio = new Date();
+                        fechaInicio.setDate(hoy.getDate() - 30);
+                        break;
+                    case '3m':
+                        fechaInicio = new Date();
+                        fechaInicio.setMonth(hoy.getMonth() - 3);
+                        break;
+                    case '1y':
+                        fechaInicio = new Date();
+                        fechaInicio.setFullYear(hoy.getFullYear() - 1);
+                        break;
+                    case 'todo':
+                        fechaInicio = new Date('2020-01-01'); // Fecha muy antigua
+                        break;
+                }
+                
+                const fechaFin = hoy.toISOString().split('T')[0];
+                const fechaInicioStr = fechaInicio.toISOString().split('T')[0];
+                
+                console.log(`📅 Consultando desde ${fechaInicioStr} hasta ${fechaFin}`);
+                
+                // Cargar servicios del período
+                const { data: servicios, error } = await supabase
+                    .from('citas')
+                    .select('servicio_principal_nombre, monto_total')
+                    .eq('barberia_id', SUPABASE_CONFIG.barberiaId)
+                    .gte('fecha', fechaInicioStr)
+                    .lte('fecha', fechaFin);
+                
+                if (error) throw error;
+                
+                if (!servicios || servicios.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center py-8 text-gray-500">
+                            <div class="text-4xl mb-2">📊</div>
+                            <p>No hay servicios registrados en ${periodo === '7d' ? 'los últimos 7 días' : periodo === '30d' ? 'los últimos 30 días' : periodo === '3m' ? 'los últimos 3 meses' : periodo === '1y' ? 'el último año' : 'el histórico'}</p>
                         </div>
-                        <div class="text-sm text-gray-500 ml-2">${cantidad} (${porcentaje}%)</div>
-                    </div>
-                    <div class="w-full bg-gray-200 rounded-full h-3">
-                        <div class="bg-gradient-to-r from-orange-400 to-red-500 h-3 rounded-full transition-all duration-1000" style="width: ${barWidth}%"></div>
+                    `;
+                    return;
+                }
+                
+                // Procesar datos
+                const conteoServicios = {};
+                servicios.forEach(s => {
+                    const servicio = s.servicio_principal_nombre;
+                    conteoServicios[servicio] = (conteoServicios[servicio] || 0) + 1;
+                });
+                
+                const top5 = Object.entries(conteoServicios)
+                    .sort(([,a], [,b]) => b - a)
+                    .slice(0, 5);
+                
+                if (top5.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center py-8 text-gray-500">
+                            <p>No hay datos suficientes para mostrar</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Generar gráfico
+                const maxCount = top5[0]?.[1] || 1;
+                const totalServicios = servicios.length;
+                
+                let html = '<div class="space-y-3">';
+                top5.forEach(([servicio, cantidad], index) => {
+                    const porcentaje = Math.round((cantidad / totalServicios) * 100);
+                    const barWidth = Math.round((cantidad / maxCount) * 100);
+                    
+                    // Colores diferentes para cada barra
+                    const colores = [
+                        'from-red-400 to-red-600',
+                        'from-orange-400 to-orange-600', 
+                        'from-yellow-400 to-yellow-600',
+                        'from-green-400 to-green-600',
+                        'from-blue-400 to-blue-600'
+                    ];
+                    const color = colores[index] || 'from-gray-400 to-gray-600';
+                    
+                    const nombreCorto = servicio.length > 25 ? servicio.substring(0, 25) + '...' : servicio;
+                    
+                    html += `
+                        <div class="mb-3">
+                            <div class="flex items-center justify-between mb-1">
+                                <div class="text-sm font-medium text-gray-700 flex-1" title="${servicio}">
+                                    ${nombreCorto}
+                                </div>
+                                <div class="text-sm font-bold text-gray-600 ml-2">${cantidad} (${porcentaje}%)</div>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
+                                <div class="bg-gradient-to-r ${color} h-4 rounded-full transition-all duration-1000 flex items-center justify-end pr-2" style="width: ${barWidth}%">
+                                    <span class="text-xs text-white font-semibold">${cantidad}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                html += '</div>';
+                
+                // Agregar resumen del período
+                html += `
+                    <div class="mt-4 pt-4 border-t border-gray-200">
+                        <div class="text-xs text-gray-500 text-center">
+                            📊 Total analizado: <span class="font-semibold">${totalServicios} servicios</span> en 
+                            <span class="font-semibold">${periodo === '7d' ? '7 días' : periodo === '30d' ? '30 días' : periodo === '3m' ? '3 meses' : periodo === '1y' ? '1 año' : 'todo el histórico'}</span>
+                        </div>
                     </div>
                 `;
-            });
-            html += '</div>';
-            
-            document.getElementById('topServicios').innerHTML = html;
+                
+                container.innerHTML = html;
+                
+            } catch (error) {
+                console.error('❌ Error filtrando servicios:', error);
+                container.innerHTML = `
+                    <div class="text-center py-4 text-red-600">
+                        <div class="text-2xl mb-2">⚠️</div>
+                        <p>Error al cargar datos del período</p>
+                    </div>
+                `;
+            }
         }
         
         function mostrarMetodosPagoOptimizado(servicios) {
