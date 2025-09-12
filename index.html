@@ -917,43 +917,317 @@
         // ===============================
         // PESTAÑAS PENDIENTES
         // ===============================
-        function loadGestionBarberos() {
-            if (userRole !== 'admin') {
-                document.getElementById('contentArea').innerHTML = `
-                    <p class="text-red-600">No tienes permisos para ver esta sección.</p>
-                `;
-                return;
-            }
+      function loadGestionBarberos() {
+    console.log('🔍 Cargando gestión de barberos...');
+    
+    // Verificar que sea admin
+    if (userRole !== 'admin') {
+        document.getElementById('contentArea').innerHTML = '<div class="text-red-600">❌ Sin permisos de administrador</div>';
+        return;
+    }
+    
+    document.getElementById('contentArea').innerHTML = `
+        <div class="max-w-4xl mx-auto">
+            <h2 class="text-2xl font-bold mb-6">
+                <i class="fas fa-users mr-2"></i>Gestión de Barberos
+            </h2>
+            <p class="text-gray-600 mb-6">Administra el personal y adelantos de la barbería</p>
             
-            document.getElementById('contentArea').innerHTML = `
-                <h2 class="text-2xl font-bold mb-6">
-                    <i class="fas fa-users mr-2"></i>Gestión de Barberos
-                </h2>
-                <p class="text-gray-600">Administra los barberos y adelantos...</p>
-                <div class="mt-6 p-4 bg-yellow-50 rounded-lg">
-                    <p class="text-yellow-800">Esta sección está en desarrollo.</p>
+            <div class="barberos-container mb-8">
+                <div class="text-center py-8">
+                    <div class="loading-spinner mx-auto"></div>
+                    <p class="mt-4 text-gray-600">⏳ Cargando barberos...</p>
                 </div>
-            `;
+            </div>
+            
+            <div class="adelantos-resumen bg-gray-50 p-6 rounded-lg">
+                <h3 class="text-lg font-bold mb-4">🔵 Resumen de Adelantos Semanal</h3>
+                <div class="adelantos-loading">
+                    <div class="loading-spinner mx-auto"></div>
+                    <p class="mt-2 text-gray-600">⏳ Cargando adelantos...</p>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Cargar barberos y adelantos
+    cargarListaBarberos();
+    cargarResumenAdelantos();
+}
+
+async function cargarListaBarberos() {
+    try {
+        console.log('🔍 Cargando lista de barberos...');
+        
+        // Por ahora usar datos hardcodeados ya que hay problemas con RLS
+        const barberosDemo = [
+            { id: '3fbc31cc-da0a-4f4a-b45b-e7a51320c92c', nombre: 'Administrador', email: 'israelparancan.n@gmail.com', role: 'admin' },
+            { id: '1a0242b8-bc7a-4e61-9e33-ac182996a950', nombre: 'Misho', email: 'ispn4trade@gmail.com', role: 'empleado' }
+        ];
+        
+        console.log('✅ Barberos cargados (demo):', barberosDemo);
+        mostrarListaBarberos(barberosDemo);
+        
+    } catch (error) {
+        console.error('❌ Error en cargarListaBarberos:', error);
+        document.querySelector('.barberos-container').innerHTML = 
+            '<div class="text-red-600 text-center">❌ Error cargando barberos</div>';
+    }
+}
+
+function mostrarListaBarberos(barberos) {
+    const container = document.querySelector('.barberos-container');
+    
+    if (!barberos || barberos.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-8">
+                <div class="text-gray-500 mb-4">👤 No hay barberos registrados</div>
+                <button class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700" onclick="alert('Funcionalidad próximamente')">
+                    ➕ Agregar Primer Barbero
+                </button>
+            </div>
+        `;
+        return;
+    }
+    
+    let html = '<div class="space-y-4">';
+    
+    barberos.forEach(barbero => {
+        const roleBadge = barbero.role === 'admin' ? 
+            '<span class="inline-block px-3 py-1 bg-purple-100 text-purple-700 text-sm rounded-full">👑 Administrador</span>' : 
+            '<span class="inline-block px-3 py-1 bg-blue-100 text-blue-700 text-sm rounded-full">💼 Empleado</span>';
+        
+        html += `
+            <div class="bg-white p-6 rounded-lg shadow border">
+                <div class="flex justify-between items-start">
+                    <div class="flex-1">
+                        <div class="text-lg font-semibold text-gray-900 mb-2">${barbero.nombre}</div>
+                        <div class="text-gray-600 mb-2">${barbero.email}</div>
+                        <div class="mb-3">${roleBadge}</div>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button class="bg-gray-100 text-gray-600 px-3 py-2 rounded hover:bg-gray-200" onclick="alert('Editar: ${barbero.nombre}')">
+                            ✏️
+                        </button>
+                        <button class="bg-red-100 text-red-600 px-3 py-2 rounded hover:bg-red-200" onclick="confirmarEliminarBarbero('${barbero.id}', '${barbero.nombre}')">
+                            🗑️
+                        </button>
+                        <button class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700" onclick="mostrarFormularioAdelanto('${barbero.id}', '${barbero.nombre}')">
+                            💰 + Adelanto
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    html += `
+        </div>
+        <div class="mt-6 text-center">
+            <button class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700" onclick="alert('Agregar barbero próximamente')">
+                ➕ Agregar Barbero
+            </button>
+        </div>
+    `;
+    
+    container.innerHTML = html;
+}
+
+function confirmarEliminarBarbero(barberoId, nombre) {
+    if (confirm(`¿Eliminar barbero "${nombre}"? Esta acción no se puede deshacer.`)) {
+        alert(`Eliminar barbero: ${nombre} (ID: ${barberoId})`);
+    }
+}
+
+function mostrarFormularioAdelanto(barberoId, nombre) {
+    const monto = prompt(`💰 Ingresa el monto del adelanto para ${nombre}:`);
+    if (monto && !isNaN(monto) && parseFloat(monto) > 0) {
+        const motivo = prompt(`Motivo del adelanto (opcional):`);
+        registrarAdelanto(barberoId, nombre, parseFloat(monto), motivo || 'Adelanto');
+    } else if (monto !== null) {
+        alert('❌ Por favor ingresa un monto válido');
+    }
+}
+
+async function registrarAdelanto(barberoId, barberoNombre, monto, motivo) {
+    try {
+        showLoading();
+        console.log(`💰 Registrando adelanto: ${barberoNombre} - $${monto}`);
+        
+        const nuevoAdelanto = {
+            barberia_id: SUPABASE_CONFIG.barberiaId,
+            barbero_id: barberoId,
+            barbero_nombre: barberoNombre,
+            monto: monto,
+            motivo: motivo,
+            activo: true
+        };
+        
+        const { data, error } = await supabase
+            .from('adelantos')
+            .insert([nuevoAdelanto]);
+        
+        if (error) {
+            console.error('❌ Error guardando adelanto:', error);
+            alert(`❌ Error al registrar adelanto: ${error.message}`);
+        } else {
+            alert(`✅ Adelanto registrado: $${monto.toLocaleString('es-CL')} para ${barberoNombre}`);
+            // Recargar resumen de adelantos
+            cargarResumenAdelantos();
         }
         
-        function loadCierreCaja() {
-            if (userRole !== 'admin') {
-                document.getElementById('contentArea').innerHTML = `
-                    <p class="text-red-600">No tienes permisos para ver esta sección.</p>
-                `;
-                return;
-            }
-            
-            document.getElementById('contentArea').innerHTML = `
-                <h2 class="text-2xl font-bold mb-6">
-                    <i class="fas fa-cash-register mr-2"></i>Cierre de Caja
-                </h2>
-                <p class="text-gray-600">Realiza el cierre de caja...</p>
-                <div class="mt-6 p-4 bg-yellow-50 rounded-lg">
-                    <p class="text-yellow-800">Esta sección está en desarrollo.</p>
-                </div>
-            `;
+    } catch (error) {
+        console.error('❌ Error crítico:', error);
+        alert('❌ Error del sistema al registrar adelanto');
+    } finally {
+        hideLoading();
+    }
+}
+
+async function cargarResumenAdelantos() {
+    try {
+        console.log('🔍 Cargando resumen de adelantos...');
+        
+        // Calcular fechas de la semana actual (lunes a domingo)
+        const hoy = new Date();
+        const diaSemana = hoy.getDay();
+        const diasDesdeInicio = diaSemana === 0 ? 6 : diaSemana - 1;
+        
+        const inicioSemana = new Date(hoy);
+        inicioSemana.setDate(hoy.getDate() - diasDesdeInicio);
+        inicioSemana.setHours(0, 0, 0, 0);
+        
+        const finSemana = new Date(inicioSemana);
+        finSemana.setDate(inicioSemana.getDate() + 6);
+        finSemana.setHours(23, 59, 59, 999);
+        
+        console.log('📅 Semana actual:', inicioSemana.toISOString().split('T')[0], 'al', finSemana.toISOString().split('T')[0]);
+        
+        const { data: adelantos, error } = await supabase
+            .from('adelantos')
+            .select('barbero_nombre, monto')
+            .eq('barberia_id', SUPABASE_CONFIG.barberiaId)
+            .eq('activo', true)
+            .gte('created_at', inicioSemana.toISOString())
+            .lte('created_at', finSemana.toISOString());
+        
+        if (error) {
+            console.error('❌ Error cargando adelantos:', error);
+            document.querySelector('.adelantos-loading').innerHTML = 
+                '<div class="text-red-600">❌ Error cargando adelantos</div>';
+            return;
         }
+        
+        console.log('✅ Adelantos de la semana:', adelantos);
+        mostrarResumenAdelantos(adelantos || []);
+        
+    } catch (error) {
+        console.error('❌ Error crítico en adelantos:', error);
+        document.querySelector('.adelantos-loading').innerHTML = 
+            '<div class="text-red-600">❌ Error del sistema</div>';
+    }
+}
+
+function mostrarResumenAdelantos(adelantos) {
+    const container = document.querySelector('.adelantos-loading').parentElement;
+    
+    if (!adelantos || adelantos.length === 0) {
+        container.innerHTML = `
+            <h3 class="text-lg font-bold mb-4">🔵 Resumen de Adelantos Semanal</h3>
+            <div class="text-center py-6">
+                <div class="text-gray-500 mb-4">💰 No hay adelantos esta semana</div>
+                <div class="flex justify-center space-x-4">
+                    <button class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700" onclick="alert('Historial próximamente')">
+                        📋 Historial Completo
+                    </button>
+                    <button class="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700" onclick="limpiarSemanaAdelantos()">
+                        🗑️ Limpiar Semana
+                    </button>
+                </div>
+            </div>
+        `;
+        return;
+    }
+    
+    // Agrupar adelantos por barbero
+    const adelantosPorBarbero = {};
+    let totalGeneral = 0;
+    
+    adelantos.forEach(adelanto => {
+        const barbero = adelanto.barbero_nombre;
+        if (!adelantosPorBarbero[barbero]) {
+            adelantosPorBarbero[barbero] = 0;
+        }
+        adelantosPorBarbero[barbero] += parseFloat(adelanto.monto || 0);
+        totalGeneral += parseFloat(adelanto.monto || 0);
+    });
+    
+    let html = '<h3 class="text-lg font-bold mb-4">🔵 Resumen de Adelantos Semanal</h3>';
+    html += '<div class="bg-white p-4 rounded border mb-4">';
+    
+    Object.keys(adelantosPorBarbero).forEach(barbero => {
+        const monto = adelantosPorBarbero[barbero];
+        html += `
+            <div class="flex justify-between items-center py-2 border-b border-gray-200">
+                <span class="font-medium">${barbero}:</span>
+                <span class="text-lg font-bold text-green-600">$${monto.toLocaleString('es-CL')}</span>
+            </div>
+        `;
+    });
+    
+    html += `
+        <div class="flex justify-between items-center py-3 pt-4 border-t border-gray-300">
+            <span class="text-lg font-bold">Total:</span>
+            <span class="text-xl font-bold text-blue-600">$${totalGeneral.toLocaleString('es-CL')}</span>
+        </div>
+    `;
+    
+    html += `
+        </div>
+        <div class="flex justify-center space-x-4">
+            <button class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700" onclick="alert('Historial próximamente')">
+                📋 Historial Completo
+            </button>
+            <button class="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700" onclick="limpiarSemanaAdelantos()">
+                🗑️ Limpiar Semana
+            </button>
+        </div>
+    `;
+    
+    container.innerHTML = html;
+}
+
+async function limpiarSemanaAdelantos() {
+    if (!confirm('⚠️ ¿Limpiar todos los adelantos de esta semana? Esta acción no se puede deshacer.')) {
+        return;
+    }
+    
+    try {
+        showLoading();
+        console.log('🗑️ Limpiando adelantos de la semana...');
+        
+        // Marcar como inactivos en lugar de eliminar
+        const { error } = await supabase
+            .from('adelantos')
+            .update({ activo: false })
+            .eq('barberia_id', SUPABASE_CONFIG.barberiaId)
+            .eq('activo', true);
+        
+        if (error) {
+            console.error('❌ Error limpiando adelantos:', error);
+            alert(`❌ Error al limpiar adelantos: ${error.message}`);
+        } else {
+            alert('✅ Adelantos de la semana limpiados correctamente');
+            cargarResumenAdelantos(); // Recargar
+        }
+        
+    } catch (error) {
+        console.error('❌ Error crítico:', error);
+        alert('❌ Error del sistema al limpiar adelantos');
+    } finally {
+        hideLoading();
+    }
+}
         
         function loadEstadisticas() {
             if (userRole !== 'admin') {
