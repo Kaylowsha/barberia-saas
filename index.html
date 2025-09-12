@@ -1162,12 +1162,22 @@ if (loadingElement) {
 }
 
 function mostrarResumenAdelantos(adelantos) {
-    const loadingElement = document.querySelector('.adelantos-loading');
-    if (!loadingElement || !loadingElement.parentElement) {
-        console.error('❌ Elemento adelantos-loading no encontrado');
+    // Buscar contenedor principal de adelantos
+    let container = document.querySelector('.adelantos-resumen');
+    
+    // Si no existe, buscar por clase alternativa
+    if (!container) {
+        const loadingElement = document.querySelector('.adelantos-loading');
+        if (loadingElement && loadingElement.parentElement) {
+            container = loadingElement.parentElement;
+        }
+    }
+    
+    // Si aún no existe, salir silenciosamente
+    if (!container) {
+        console.log('🔄 Contenedor de adelantos no disponible, omitiendo actualización');
         return;
     }
-    const container = loadingElement.parentElement;
     
     if (!adelantos || adelantos.length === 0) {
         container.innerHTML = `
