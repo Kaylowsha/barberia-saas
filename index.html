@@ -1066,343 +1066,396 @@ async function confirmarEliminarServicio(servicioId, codigo) {
         // ===============================
         // PESTAÑAS PENDIENTES
         // ===============================
-      function loadGestionBarberos() {
-    console.log('🔍 Cargando gestión de barberos...');
-    
-    // Verificar que sea admin
-    if (userRole !== 'admin') {
-        document.getElementById('contentArea').innerHTML = '<div class="text-red-600">❌ Sin permisos de administrador</div>';
-        return;
-    }
-    
-    document.getElementById('contentArea').innerHTML = `
-        <div class="max-w-4xl mx-auto">
-            <h2 class="text-2xl font-bold mb-6">
-                <i class="fas fa-users mr-2"></i>Gestión de Barberos
-            </h2>
-            <p class="text-gray-600 mb-6">Administra el personal y adelantos de la barbería</p>
+    // ===============================
+        // PESTAÑA: CIERRE DE CAJA
+        // ===============================
+        function loadCierreCaja() {
+            console.log('🔍 Cargando cierre de caja...');
             
-            <div class="barberos-container mb-8">
-                <div class="text-center py-8">
-                    <div class="loading-spinner mx-auto"></div>
-                    <p class="mt-4 text-gray-600">⏳ Cargando barberos...</p>
-                </div>
-            </div>
+            // Verificar que sea admin
+            if (userRole !== 'admin') {
+                document.getElementById('contentArea').innerHTML = '<div class="text-red-600">❌ Sin permisos de administrador</div>';
+                return;
+            }
             
-            <div class="adelantos-resumen bg-gray-50 p-6 rounded-lg">
-                <h3 class="text-lg font-bold mb-4">🔵 Resumen de Adelantos Semanal</h3>
-                <div class="adelantos-loading">
-                    <div class="loading-spinner mx-auto"></div>
-                    <p class="mt-2 text-gray-600">⏳ Cargando adelantos...</p>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    // Cargar barberos y adelantos
-    cargarListaBarberos();
-    cargarResumenAdelantos();
-}
-
-async function cargarListaBarberos() {
-    try {
-        console.log('🔍 Cargando lista de barberos...');
-        
-        // Por ahora usar datos hardcodeados ya que hay problemas con RLS
-        const barberosDemo = [
-            { id: '3fbc31cc-da0a-4f4a-b45b-e7a51320c92c', nombre: 'Administrador', email: 'israelparancan.n@gmail.com', role: 'admin' },
-            { id: '1a0242b8-bc7a-4e61-9e33-ac182996a950', nombre: 'Misho', email: 'ispn4trade@gmail.com', role: 'empleado' }
-        ];
-        
-        console.log('✅ Barberos cargados (demo):', barberosDemo);
-        mostrarListaBarberos(barberosDemo);
-        
-    } catch (error) {
-        console.error('❌ Error en cargarListaBarberos:', error);
-        document.querySelector('.barberos-container').innerHTML = 
-            '<div class="text-red-600 text-center">❌ Error cargando barberos</div>';
-    }
-}
-
-function mostrarListaBarberos(barberos) {
-    const container = document.querySelector('.barberos-container');
-    
-    if (!barberos || barberos.length === 0) {
-        container.innerHTML = `
-            <div class="text-center py-8">
-                <div class="text-gray-500 mb-4">👤 No hay barberos registrados</div>
-                <button class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700" onclick="alert('Funcionalidad próximamente')">
-                    ➕ Agregar Primer Barbero
-                </button>
-            </div>
-        `;
-        return;
-    }
-    
-    let html = '<div class="space-y-4">';
-    
-    barberos.forEach(barbero => {
-        const roleBadge = barbero.role === 'admin' ? 
-            '<span class="inline-block px-3 py-1 bg-purple-100 text-purple-700 text-sm rounded-full">👑 Administrador</span>' : 
-            '<span class="inline-block px-3 py-1 bg-blue-100 text-blue-700 text-sm rounded-full">💼 Empleado</span>';
-        
-        html += `
-            <div class="bg-white p-6 rounded-lg shadow border">
-                <div class="flex justify-between items-start">
-                    <div class="flex-1">
-                        <div class="text-lg font-semibold text-gray-900 mb-2">${barbero.nombre}</div>
-                        <div class="text-gray-600 mb-2">${barbero.email}</div>
-                        <div class="mb-3">${roleBadge}</div>
+            document.getElementById('contentArea').innerHTML = `
+                <div class="max-w-5xl mx-auto">
+                    <h2 class="text-2xl font-bold mb-6">
+                        <i class="fas fa-cash-register mr-2"></i>Cierre de Caja
+                    </h2>
+                    
+                    <!-- Selector de Vista -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Tipo de Cierre:</label>
+                            <select id="vistaCierre" class="w-full px-4 py-2 border border-gray-300 rounded-lg" onchange="cambiarVistaCierre()">
+                                <option value="diaria">📅 Cierre Diario</option>
+                                <option value="semanal">📊 Cierre Semanal</option>
+                                <option value="rango">🗓️ Rango Personalizado</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Filtrar por Barbero:</label>
+                            <select id="selectBarberoCierre" class="w-full px-4 py-2 border border-gray-300 rounded-lg" onchange="cargarDatosCierre()">
+                                <option value="todos">Ver Todos</option>
+                                <option value="mi">Mi Resumen</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="flex space-x-2">
-                        <button class="bg-gray-100 text-gray-600 px-3 py-2 rounded hover:bg-gray-200" onclick="alert('Editar: ${barbero.nombre}')">
-                            ✏️
-                        </button>
-                        <button class="bg-red-100 text-red-600 px-3 py-2 rounded hover:bg-red-200" onclick="confirmarEliminarBarbero('${barbero.id}', '${barbero.nombre}')">
-                            🗑️
-                        </button>
-                        <button class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700" onclick="mostrarFormularioAdelanto('${barbero.id}', '${barbero.nombre}')">
-                            💰 + Adelanto
-                        </button>
+                    
+                    <!-- Contenedor de Fechas -->
+                    <div id="contenedorFechasCierre" class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Fecha:</label>
+                        <input type="date" id="fechaCierre" class="w-full px-4 py-2 border border-gray-300 rounded-lg" onchange="cargarDatosCierre()">
+                    </div>
+                    
+                    <!-- Contenedor del Cierre -->
+                    <div id="contenidoCierre" class="mt-6">
+                        <div class="text-center py-8">
+                            <div class="loading-spinner mx-auto"></div>
+                            <p class="mt-4 text-gray-600">Calculando cierre...</p>
+                        </div>
                     </div>
                 </div>
-            </div>
-        `;
-    });
-    
-    html += `
-        </div>
-        <div class="mt-6 text-center">
-            <button class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700" onclick="alert('Agregar barbero próximamente')">
-                ➕ Agregar Barbero
-            </button>
-        </div>
-    `;
-    
-    container.innerHTML = html;
-}
-
-function confirmarEliminarBarbero(barberoId, nombre) {
-    if (confirm(`¿Eliminar barbero "${nombre}"? Esta acción no se puede deshacer.`)) {
-        alert(`Eliminar barbero: ${nombre} (ID: ${barberoId})`);
-    }
-}
-
-function mostrarFormularioAdelanto(barberoId, nombre) {
-    const monto = prompt(`💰 Ingresa el monto del adelanto para ${nombre}:`);
-    if (monto && !isNaN(monto) && parseFloat(monto) > 0) {
-        const motivo = prompt(`Motivo del adelanto (opcional):`);
-        registrarAdelanto(barberoId, nombre, parseFloat(monto), motivo || 'Adelanto');
-    } else if (monto !== null) {
-        alert('❌ Por favor ingresa un monto válido');
-    }
-}
-
-async function registrarAdelanto(barberoId, barberoNombre, monto, motivo) {
-    try {
-        showLoading();
-        console.log(`💰 Registrando adelanto: ${barberoNombre} - $${monto}`);
-        
-       // Calcular semana y año actual
-const hoy = new Date();
-const inicioAño = new Date(hoy.getFullYear(), 0, 1);
-const diasTranscurridos = Math.floor((hoy - inicioAño) / (24 * 60 * 60 * 1000));
-const numeroSemana = Math.ceil((diasTranscurridos + inicioAño.getDay() + 1) / 7);
-
-const nuevoAdelanto = {
-    barberia_id: SUPABASE_CONFIG.barberiaId,
-    barbero_id: barberoId,
-    barbero_nombre: barberoNombre,
-    monto: monto,
-    motivo: motivo,
-    semana: numeroSemana,
-    año: hoy.getFullYear(),
-    activo: true
-};
-        
-        const { data, error } = await supabase
-            .from('adelantos')
-            .insert([nuevoAdelanto]);
-        
-        if (error) {
-            console.error('❌ Error guardando adelanto:', error);
-            alert(`❌ Error al registrar adelanto: ${error.message}`);
-        } else {
-            alert(`✅ Adelanto registrado: $${monto.toLocaleString('es-CL')} para ${barberoNombre}`);
-            // Recargar resumen de adelantos
-            cargarResumenAdelantos();
+            `;
+            
+            // Configurar fecha inicial
+            setTimeout(() => {
+                const fechaInput = document.getElementById('fechaCierre');
+                if (fechaInput) {
+                    fechaInput.value = new Date().toISOString().split('T')[0];
+                }
+                cargarBarberosEnFiltroCierre();
+                cargarDatosCierre();
+            }, 100);
         }
         
-    } catch (error) {
-        console.error('❌ Error crítico:', error);
-        alert('❌ Error del sistema al registrar adelanto');
-    } finally {
-        hideLoading();
-    }
-}
-
-async function cargarResumenAdelantos() {
-    try {
-        console.log('🔍 Cargando resumen de adelantos...');
-        
-        // Calcular fechas de la semana actual (lunes a domingo)
-        const hoy = new Date();
-        const diaSemana = hoy.getDay();
-        const diasDesdeInicio = diaSemana === 0 ? 6 : diaSemana - 1;
-        
-        const inicioSemana = new Date(hoy);
-        inicioSemana.setDate(hoy.getDate() - diasDesdeInicio);
-        inicioSemana.setHours(0, 0, 0, 0);
-        
-        const finSemana = new Date(inicioSemana);
-        finSemana.setDate(inicioSemana.getDate() + 6);
-        finSemana.setHours(23, 59, 59, 999);
-        
-        console.log('📅 Semana actual:', inicioSemana.toISOString().split('T')[0], 'al', finSemana.toISOString().split('T')[0]);
-        
-        const { data: adelantos, error } = await supabase
-            .from('adelantos')
-            .select('barbero_nombre, monto')
-            .eq('barberia_id', SUPABASE_CONFIG.barberiaId)
-            .eq('activo', true)
-            .gte('created_at', inicioSemana.toISOString())
-            .lte('created_at', finSemana.toISOString());
-        
-        if (error) {
-            console.error('❌ Error cargando adelantos:', error);
-           const loadingElement = document.querySelector('.adelantos-loading');
-if (loadingElement) {
-    loadingElement.innerHTML = '<div class="text-red-600">❌ Error del sistema</div>';
-}
-            return;
+        async function cargarBarberosEnFiltroCierre() {
+            try {
+                console.log('🔍 Cargando barberos para cierre...');
+                
+                const barberosDemo = [
+                    { id: '1a0242b8-bc7a-4e61-9e33-ac182996a950', nombre: 'Misho' }
+                ];
+                
+                const select = document.getElementById('selectBarberoCierre');
+                if (!select) return;
+                
+                barberosDemo.forEach(barbero => {
+                    const option = document.createElement('option');
+                    option.value = barbero.id;
+                    option.textContent = barbero.nombre;
+                    select.appendChild(option);
+                });
+                
+            } catch (error) {
+                console.error('❌ Error cargando barberos para cierre:', error);
+            }
         }
         
-        console.log('✅ Adelantos de la semana:', adelantos);
-        mostrarResumenAdelantos(adelantos || []);
-        
-    } catch (error) {
-        console.error('❌ Error crítico en adelantos:', error);
-        document.querySelector('.adelantos-loading').innerHTML = 
-            '<div class="text-red-600">❌ Error del sistema</div>';
-    }
-}
-
-function mostrarResumenAdelantos(adelantos) {
-    // Buscar contenedor principal de adelantos
-    let container = document.querySelector('.adelantos-resumen');
-    
-    // Si no existe, buscar por clase alternativa
-    if (!container) {
-        const loadingElement = document.querySelector('.adelantos-loading');
-        if (loadingElement && loadingElement.parentElement) {
-            container = loadingElement.parentElement;
+        function cambiarVistaCierre() {
+            const vista = document.getElementById('vistaCierre').value;
+            const fechaContainer = document.getElementById('contenedorFechasCierre');
+            
+            if (!fechaContainer) return;
+            
+            console.log('🔄 Cambiando vista de cierre a:', vista);
+            
+            if (vista === 'diaria') {
+                fechaContainer.innerHTML = `
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Fecha del Cierre:</label>
+                    <input type="date" id="fechaCierre" class="w-full px-4 py-2 border border-gray-300 rounded-lg" onchange="cargarDatosCierre()">
+                `;
+            } else if (vista === 'semanal') {
+                fechaContainer.innerHTML = `
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Seleccionar cualquier día de la semana:</label>
+                    <input type="date" id="fechaCierre" class="w-full px-4 py-2 border border-gray-300 rounded-lg" onchange="cargarDatosCierre()">
+                `;
+            } else if (vista === 'rango') {
+                fechaContainer.innerHTML = `
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Rango de fechas:</label>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-xs text-gray-600">Desde:</label>
+                            <input type="date" id="fechaDesde" class="w-full px-4 py-2 border border-gray-300 rounded-lg" onchange="cargarDatosCierre()">
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-600">Hasta:</label>
+                            <input type="date" id="fechaHasta" class="w-full px-4 py-2 border border-gray-300 rounded-lg" onchange="cargarDatosCierre()">
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Configurar fechas iniciales después del cambio
+            setTimeout(() => {
+                if (vista === 'diaria' || vista === 'semanal') {
+                    const fechaInput = document.getElementById('fechaCierre');
+                    if (fechaInput) {
+                        fechaInput.value = new Date().toISOString().split('T')[0];
+                    }
+                } else if (vista === 'rango') {
+                    const now = new Date();
+                    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+                    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+                    
+                    const fechaDesde = document.getElementById('fechaDesde');
+                    const fechaHasta = document.getElementById('fechaHasta');
+                    
+                    if (fechaDesde && fechaHasta) {
+                        fechaDesde.value = firstDay.toISOString().split('T')[0];
+                        fechaHasta.value = lastDay.toISOString().split('T')[0];
+                    }
+                }
+                cargarDatosCierre();
+            }, 100);
         }
-    }
-    
-    // Si aún no existe, salir silenciosamente
-    if (!container) {
-        console.log('🔄 Contenedor de adelantos no disponible, omitiendo actualización');
-        return;
-    }
-    
-    if (!adelantos || adelantos.length === 0) {
-        container.innerHTML = `
-            <h3 class="text-lg font-bold mb-4">🔵 Resumen de Adelantos Semanal</h3>
-            <div class="text-center py-6">
-                <div class="text-gray-500 mb-4">💰 No hay adelantos esta semana</div>
-                <div class="flex justify-center space-x-4">
-                    <button class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700" onclick="alert('Historial próximamente')">
-                        📋 Historial Completo
-                    </button>
-                    <button class="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700" onclick="limpiarSemanaAdelantos()">
-                        🗑️ Limpiar Semana
-                    </button>
+        
+        async function cargarDatosCierre() {
+            const contenido = document.getElementById('contenidoCierre');
+            if (!contenido) return;
+            
+            contenido.innerHTML = '<div class="text-center py-8"><div class="loading-spinner mx-auto"></div><p class="mt-4 text-gray-600">💰 Calculando cierre...</p></div>';
+            
+            try {
+                const vista = document.getElementById('vistaCierre').value;
+                const filtro = document.getElementById('selectBarberoCierre')?.value || 'todos';
+                
+                let fechaInicio, fechaFin, fecha;
+                
+                // Obtener fechas según la vista
+                if (vista === 'rango') {
+                    fechaInicio = document.getElementById('fechaDesde')?.value;
+                    fechaFin = document.getElementById('fechaHasta')?.value;
+                    
+                    if (!fechaInicio || !fechaFin) {
+                        contenido.innerHTML = '<p class="text-gray-500">Por favor selecciona ambas fechas del rango</p>';
+                        return;
+                    }
+                } else {
+                    fecha = document.getElementById('fechaCierre')?.value;
+                    
+                    if (!fecha) {
+                        contenido.innerHTML = '<p class="text-gray-500">Por favor selecciona una fecha</p>';
+                        return;
+                    }
+                    
+                    if (vista === 'diaria') {
+                        fechaInicio = fecha;
+                        fechaFin = fecha;
+                    } else if (vista === 'semanal') {
+                        // Calcular semana completa (lunes a domingo)
+                        const date = new Date(fecha + 'T00:00:00');
+                        const dayOfWeek = date.getDay();
+                        const diff = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+                        
+                        const lunes = new Date(date);
+                        lunes.setDate(date.getDate() - diff);
+                        
+                        const domingo = new Date(lunes);
+                        domingo.setDate(lunes.getDate() + 6);
+                        
+                        fechaInicio = lunes.toISOString().split('T')[0];
+                        fechaFin = domingo.toISOString().split('T')[0];
+                    }
+                }
+                
+                console.log(`💰 Cargando cierre: ${vista} | ${fechaInicio} al ${fechaFin}`);
+                
+                // Cargar servicios
+                let queryServicios = supabase
+                    .from('citas')
+                    .select('*')
+                    .eq('barberia_id', SUPABASE_CONFIG.barberiaId)
+                    .gte('fecha', fechaInicio)
+                    .lte('fecha', fechaFin);
+                
+                // Aplicar filtro por barbero
+                if (filtro !== 'todos') {
+                    if (filtro === 'mi') {
+                        queryServicios = queryServicios.eq('realizado_por_id', currentUser.id);
+                    } else {
+                        queryServicios = queryServicios.eq('realizado_por_id', filtro);
+                    }
+                }
+                
+                const { data: servicios, error } = await queryServicios;
+                if (error) throw error;
+                
+                // Calcular totales de servicios
+                const totalRecaudado = servicios ? servicios.reduce((sum, s) => sum + parseFloat(s.monto_total || 0), 0) : 0;
+                const totalServicios = servicios ? servicios.length : 0;
+                
+                // Agrupar por forma de pago
+                const porFormaPago = servicios ? servicios.reduce((acc, s) => {
+                    acc[s.forma_pago] = (acc[s.forma_pago] || 0) + parseFloat(s.monto_total || 0);
+                    return acc;
+                }, {}) : {};
+                
+                // Cargar adelantos SOLO para vista semanal y rango
+                let totalAdelantos = 0;
+                if (vista !== 'diaria') {
+                    console.log('💸 Cargando adelantos para cierre...');
+                    
+                    let queryAdelantos = supabase
+                        .from('adelantos')
+                        .select('barbero_id, monto')
+                        .eq('barberia_id', SUPABASE_CONFIG.barberiaId)
+                        .eq('activo', true)
+                        .gte('created_at', fechaInicio + 'T00:00:00')
+                        .lte('created_at', fechaFin + 'T23:59:59');
+                    
+                    // Aplicar mismo filtro que servicios
+                    if (filtro !== 'todos') {
+                        if (filtro === 'mi') {
+                            queryAdelantos = queryAdelantos.eq('barbero_id', currentUser.id);
+                        } else {
+                            queryAdelantos = queryAdelantos.eq('barbero_id', filtro);
+                        }
+                    }
+                    
+                    const { data: adelantos, error: errorAdelantos } = await queryAdelantos;
+                    
+                    if (errorAdelantos) {
+                        console.error('❌ Error cargando adelantos:', errorAdelantos);
+                    } else if (adelantos) {
+                        totalAdelantos = adelantos.reduce((sum, a) => sum + parseFloat(a.monto || 0), 0);
+                        console.log('💸 Total adelantos:', totalAdelantos);
+                    }
+                }
+                
+                // Calcular monto a pagar
+                const montoAPagar = totalRecaudado - totalAdelantos;
+                
+                // Generar HTML del cierre
+                mostrarCierre({
+                    vista,
+                    fechaInicio,
+                    fechaFin,
+                    totalRecaudado,
+                    totalServicios,
+                    totalAdelantos,
+                    montoAPagar,
+                    porFormaPago
+                });
+                
+            } catch (error) {
+                console.error('❌ Error cargando cierre:', error);
+                contenido.innerHTML = '<div class="bg-red-100 p-4 rounded-lg text-red-700">❌ Error al calcular el cierre. Intenta nuevamente.</div>';
+            }
+        }
+        
+        function mostrarCierre(datos) {
+            const {
+                vista,
+                fechaInicio,
+                fechaFin,
+                totalRecaudado,
+                totalServicios,
+                totalAdelantos,
+                montoAPagar,
+                porFormaPago
+            } = datos;
+            
+            const contenido = document.getElementById('contenidoCierre');
+            
+            let tituloVista = vista === 'diaria' ? 'DIARIO' : 
+                             vista === 'semanal' ? 'SEMANAL' : 'RANGO PERSONALIZADO';
+            
+            let fechaTexto = fechaInicio === fechaFin ? fechaInicio : `${fechaInicio} al ${fechaFin}`;
+            
+            let html = `
+                <div class="bg-white rounded-lg shadow-lg border-2 border-blue-200">
+                    <!-- Encabezado -->
+                    <div class="bg-blue-600 text-white p-6 rounded-t-lg">
+                        <h3 class="text-2xl font-bold flex items-center">
+                            💰 CIERRE DE CAJA ${tituloVista}
+                        </h3>
+                        <p class="text-blue-100 mt-2">📅 ${fechaTexto}</p>
+                    </div>
+                    
+                    <!-- Métricas principales -->
+                    <div class="p-6">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                            <div class="bg-green-50 p-4 rounded-lg border border-green-200">
+                                <div class="text-sm text-green-600 mb-1">💰 Total Recaudado</div>
+                                <div class="text-2xl font-bold text-green-900">$${totalRecaudado.toLocaleString('es-CL')}</div>
+                            </div>
+                            
+                            <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                                <div class="text-sm text-blue-600 mb-1">📊 Servicios Realizados</div>
+                                <div class="text-2xl font-bold text-blue-900">${totalServicios}</div>
+                            </div>
+            `;
+            
+            // Mostrar adelantos solo si no es vista diaria
+            if (vista !== 'diaria') {
+                html += `
+                            <div class="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                                <div class="text-sm text-yellow-600 mb-1">💸 Adelantos del Período</div>
+                                <div class="text-2xl font-bold text-yellow-900">$${totalAdelantos.toLocaleString('es-CL')}</div>
+                            </div>
+                `;
+            } else {
+                html += `
+                            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                                <div class="text-sm text-gray-600 mb-1">ℹ️ Vista Diaria</div>
+                                <div class="text-lg text-gray-700">Sin adelantos</div>
+                            </div>
+                `;
+            }
+            
+            html += `
+                        </div>
+                        
+                        <!-- MONTO A PAGAR - Destacado -->
+                        <div class="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-6 rounded-xl mb-6 shadow-lg">
+                            <div class="text-center">
+                                <div class="text-lg font-semibold mb-2">💰 MONTO A PAGAR</div>
+                                <div class="text-4xl font-bold">${vista === 'diaria' ? 
+                                    `$${totalRecaudado.toLocaleString('es-CL')}` : 
+                                    `$${montoAPagar.toLocaleString('es-CL')}`}</div>
+                                ${vista !== 'diaria' ? `
+                                    <div class="text-purple-100 mt-2 text-sm">
+                                        (Recaudado: $${totalRecaudado.toLocaleString('es-CL')} - Adelantos: $${totalAdelantos.toLocaleString('es-CL')})
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                        
+                        <!-- Desglose por forma de pago -->
+                        <div class="border-t pt-6">
+                            <h4 class="font-bold text-lg mb-4 flex items-center">
+                                💳 Desglose por Forma de Pago
+                            </h4>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div class="bg-green-50 p-4 rounded-lg">
+                                    <div class="flex justify-between items-center">
+                                        <span class="font-medium">💵 Efectivo:</span>
+                                        <span class="text-xl font-bold text-green-600">$${(porFormaPago['Efectivo'] || 0).toLocaleString('es-CL')}</span>
+                                    </div>
+                                </div>
+                                <div class="bg-blue-50 p-4 rounded-lg">
+                                    <div class="flex justify-between items-center">
+                                        <span class="font-medium">💳 Cuenta RUT:</span>
+                                        <span class="text-xl font-bold text-blue-600">$${(porFormaPago['Cuenta RUT'] || 0).toLocaleString('es-CL')}</span>
+                                    </div>
+                                </div>
+                                <div class="bg-purple-50 p-4 rounded-lg">
+                                    <div class="flex justify-between items-center">
+                                        <span class="font-medium">📱 Mercado Pago:</span>
+                                        <span class="text-xl font-bold text-purple-600">$${(porFormaPago['Mercado Pago'] || 0).toLocaleString('es-CL')}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        `;
-        return;
-    }
-    
-    // Agrupar adelantos por barbero
-    const adelantosPorBarbero = {};
-    let totalGeneral = 0;
-    
-    adelantos.forEach(adelanto => {
-        const barbero = adelanto.barbero_nombre;
-        if (!adelantosPorBarbero[barbero]) {
-            adelantosPorBarbero[barbero] = 0;
-        }
-        adelantosPorBarbero[barbero] += parseFloat(adelanto.monto || 0);
-        totalGeneral += parseFloat(adelanto.monto || 0);
-    });
-    
-    let html = '<h3 class="text-lg font-bold mb-4">🔵 Resumen de Adelantos Semanal</h3>';
-    html += '<div class="bg-white p-4 rounded border mb-4">';
-    
-    Object.keys(adelantosPorBarbero).forEach(barbero => {
-        const monto = adelantosPorBarbero[barbero];
-        html += `
-            <div class="flex justify-between items-center py-2 border-b border-gray-200">
-                <span class="font-medium">${barbero}:</span>
-                <span class="text-lg font-bold text-green-600">$${monto.toLocaleString('es-CL')}</span>
-            </div>
-        `;
-    });
-    
-    html += `
-        <div class="flex justify-between items-center py-3 pt-4 border-t border-gray-300">
-            <span class="text-lg font-bold">Total:</span>
-            <span class="text-xl font-bold text-blue-600">$${totalGeneral.toLocaleString('es-CL')}</span>
-        </div>
-    `;
-    
-    html += `
-        </div>
-        <div class="flex justify-center space-x-4">
-            <button class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700" onclick="alert('Historial próximamente')">
-                📋 Historial Completo
-            </button>
-            <button class="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700" onclick="limpiarSemanaAdelantos()">
-                🗑️ Limpiar Semana
-            </button>
-        </div>
-    `;
-    
-    container.innerHTML = html;
-}
-
-async function limpiarSemanaAdelantos() {
-    if (!confirm('⚠️ ¿Limpiar todos los adelantos de esta semana? Esta acción no se puede deshacer.')) {
-        return;
-    }
-    
-    try {
-        showLoading();
-        console.log('🗑️ Limpiando adelantos de la semana...');
-        
-        // Marcar como inactivos en lugar de eliminar
-        const { error } = await supabase
-            .from('adelantos')
-            .update({ activo: false })
-            .eq('barberia_id', SUPABASE_CONFIG.barberiaId)
-            .eq('activo', true);
-        
-        if (error) {
-            console.error('❌ Error limpiando adelantos:', error);
-            alert(`❌ Error al limpiar adelantos: ${error.message}`);
-        } else {
-            alert('✅ Adelantos de la semana limpiados correctamente');
-            cargarResumenAdelantos(); // Recargar
-        }
-        
-    } catch (error) {
-        console.error('❌ Error crítico:', error);
-        alert('❌ Error del sistema al limpiar adelantos');
-    } finally {
-        hideLoading();
-    }
-}
-        
+            `;
+            
+            contenido.innerHTML = html;
+        }    
         function loadEstadisticas() {
             if (userRole !== 'admin') {
                 document.getElementById('contentArea').innerHTML = `
