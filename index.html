@@ -41,6 +41,66 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        /* Estilos para Resumen */
+.resumen-card {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.fecha-rango {
+    color: #666;
+    font-size: 14px;
+    margin-bottom: 20px;
+}
+
+.resumen-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.stat-item {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 5px;
+}
+
+.stat-value {
+    font-size: 24px;
+    font-weight: bold;
+    color: #333;
+}
+
+.desglose-pago {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+}
+
+.desglose-pago h4 {
+    font-size: 16px;
+    margin-bottom: 10px;
+}
+
+.desglose-pago ul {
+    list-style: none;
+    padding: 0;
+}
+
+.desglose-pago li {
+    padding: 8px 0;
+    font-size: 14px;
+}
     </style>
 </head>
 <body class="bg-gray-50">
@@ -535,25 +595,256 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
        
         
         function loadResumen() {
-            document.getElementById('contentArea').innerHTML = `
-                <h2 class="text-2xl font-bold mb-6">
-                    <i class="fas fa-chart-bar mr-2"></i>Resumen
-                </h2>
-                <p class="text-gray-600">Selecciona el período para ver el resumen...</p>
-                <!-- Aquí iría el contenido del resumen -->
+         <div id="resumen" class="tab-content">
+    <h2>📊 Resumen</h2>
+    
+    <!-- Selector de Vista -->
+    <div class="form-group">
+        <label>Seleccionar Vista:</label>
+        <select id="vistaResumen" class="form-control" onchange="cambiarVistaResumen()">
+            <option value="diaria">Vista Diaria</option>
+            <option value="semanal">Vista Semanal</option>
+            <option value="mensual">Vista Mensual</option>
+        </select>
+    </div>
+
+    <!-- Filtro de Barbero (solo para admin) -->
+    <div id="filtroBarberoResumen" class="form-group" style="display:none;">
+        <label>Filtrar por Barbero:</label>
+        <select id="selectBarberoResumen" class="form-control" onchange="cargarResumen()">
+            <option value="todos">Ver Todos</option>
+            <option value="mi">Mi Resumen</option>
+        </select>
+    </div>
+
+    <!-- Selector de Fecha -->
+    <div class="form-group">
+        <label id="labelFechaResumen">Fecha:</label>
+        <input type="date" id="fechaResumen" class="form-control" onchange="cargarResumen()">
+    </div>
+
+    <!-- Contenedor del Resumen -->
+    <div id="contenidoResumen" style="margin-top: 20px;">
+        <div class="loading">Cargando resumen...</div>
+    </div>
+</div>
+        
+      // Función para cargar resumen
+async function loadResumen() {
+    console.log('Cargando resumen...');
+    
+    // Configurar fecha inicial
+    document.getElementById('fechaResumen').value = new Date().toISOString().split('T')[0];
+    
+    // Si es admin, mostrar filtro de barberos
+    if (currentUser.role === 'admin') {
+        document.getElementById('filtroBarberoResumen').style.display = 'block';
+        await cargarBarberosEnFiltro();
+    }
+    
+    // Cargar datos del resumen
+    await cargarResumen();
+}
+
+// Función para cambiar vista del resumen
+function cambiarVistaResumen() {
+    const vista = document.getElementById('vistaResumen').value;
+    const labelFecha = document.getElementById('labelFechaResumen');
+    const inputFecha = document.getElementById('fechaResumen');
+    
+    switch(vista) {
+        case 'diaria':
+            labelFecha.textContent = 'Fecha:';
+            inputFecha.type = 'date';
+            break;
+        case 'semanal':
+            labelFecha.textContent = 'Seleccionar cualquier día de la semana:';
+            inputFecha.type = 'date';
+            break;
+        case 'mensual':
+            labelFecha.textContent = 'Seleccionar mes:';
+            inputFecha.type = 'month';
+            break;
+    }
+    
+    cargarResumen();
+}
+
+// Función para cargar barberos en el filtro
+async function cargarBarberosEnFiltro() {
+    try {
+        const { data: barberos, error } = await supabase
+            .from('usuarios')
+            .select('id, nombre')
+            .eq('barberia_id', BARBERIA_ID)
+            .eq('activo', true);
+        
+        if (error) throw error;
+        
+        const select = document.getElementById('selectBarberoResumen');
+        
+        // Mantener las primeras dos opciones y agregar los barberos
+        select.innerHTML = `
+            <option value="todos">Ver Todos</option>
+            <option value="mi">Mi Resumen</option>
+        `;
+        
+        barberos.forEach(barbero => {
+            const option = document.createElement('option');
+            option.value = barbero.id;
+            option.textContent = barbero.nombre;
+            select.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Error cargando barberos:', error);
+    }
+}
+
+// Función principal para cargar datos del resumen
+async function cargarResumen() {
+    const contenido = document.getElementById('contenidoResumen');
+    contenido.innerHTML = '<div class="loading">Calculando resumen...</div>';
+    
+    try {
+        const vista = document.getElementById('vistaResumen').value;
+        const fecha = document.getElementById('fechaResumen').value;
+        const filtro = document.getElementById('selectBarberoResumen')?.value || 'mi';
+        
+        if (!fecha) {
+            contenido.innerHTML = '<p>Por favor selecciona una fecha</p>';
+            return;
+        }
+        
+        let fechaInicio, fechaFin;
+        
+        // Calcular rango de fechas según la vista
+        if (vista === 'diaria') {
+            fechaInicio = fecha;
+            fechaFin = fecha;
+        } else if (vista === 'semanal') {
+            const date = new Date(fecha);
+            const dayOfWeek = date.getDay();
+            const diff = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Ajustar para que lunes sea el inicio
+            
+            const lunes = new Date(date);
+            lunes.setDate(date.getDate() - diff);
+            
+            const domingo = new Date(lunes);
+            domingo.setDate(lunes.getDate() + 6);
+            
+            fechaInicio = lunes.toISOString().split('T')[0];
+            fechaFin = domingo.toISOString().split('T')[0];
+        } else if (vista === 'mensual') {
+            const [year, month] = fecha.split('-');
+            fechaInicio = `${year}-${month}-01`;
+            const lastDay = new Date(year, month, 0).getDate();
+            fechaFin = `${year}-${month}-${lastDay.toString().padStart(2, '0')}`;
+        }
+        
+        // Construir query base
+        let query = supabase
+            .from('citas')
+            .select('*')
+            .eq('barberia_id', BARBERIA_ID)
+            .gte('created_at', fechaInicio + 'T00:00:00')
+            .lte('created_at', fechaFin + 'T23:59:59');
+        
+        // Aplicar filtro según rol y selección
+        if (currentUser.role === 'empleado') {
+            query = query.eq('realizado_por_id', currentUser.id);
+        } else if (currentUser.role === 'admin' && filtro !== 'todos') {
+            if (filtro === 'mi') {
+                query = query.eq('realizado_por_id', currentUser.id);
+            } else {
+                query = query.eq('realizado_por_id', filtro);
+            }
+        }
+        
+        const { data: servicios, error } = await query;
+        
+        if (error) throw error;
+        
+        // Calcular totales
+        const totalRecaudado = servicios.reduce((sum, s) => sum + parseFloat(s.monto_total || 0), 0);
+        const totalServicios = servicios.length;
+        
+        // Agrupar por forma de pago
+        const porFormaPago = servicios.reduce((acc, s) => {
+            acc[s.forma_pago] = (acc[s.forma_pago] || 0) + parseFloat(s.monto_total || 0);
+            return acc;
+        }, {});
+        
+        // Obtener adelantos si es vista semanal o mensual
+        let totalAdelantos = 0;
+        if (vista !== 'diaria') {
+            const { data: adelantos } = await supabase
+                .from('adelantos')
+                .select('monto')
+                .eq('barberia_id', BARBERIA_ID)
+                .eq('activo', true)
+                .gte('created_at', fechaInicio + 'T00:00:00')
+                .lte('created_at', fechaFin + 'T23:59:59');
+            
+            if (adelantos) {
+                totalAdelantos = adelantos.reduce((sum, a) => sum + parseFloat(a.monto || 0), 0);
+            }
+        }
+        
+        // Mostrar resumen
+        let html = `
+            <div class="resumen-card">
+                <h3>📅 Resumen ${vista === 'diaria' ? 'del Día' : vista === 'semanal' ? 'Semanal' : 'Mensual'}</h3>
+                <p class="fecha-rango">${fechaInicio === fechaFin ? fechaInicio : fechaInicio + ' al ' + fechaFin}</p>
+                
+                <div class="resumen-stats">
+                    <div class="stat-item">
+                        <div class="stat-label">💰 Total Recaudado</div>
+                        <div class="stat-value">$${totalRecaudado.toLocaleString('es-CL')}</div>
+                    </div>
+                    
+                    <div class="stat-item">
+                        <div class="stat-label">📊 Servicios Realizados</div>
+                        <div class="stat-value">${totalServicios}</div>
+                    </div>
+        `;
+        
+        if (vista !== 'diaria' && totalAdelantos > 0) {
+            html += `
+                    <div class="stat-item">
+                        <div class="stat-label">💸 Adelantos</div>
+                        <div class="stat-value">$${totalAdelantos.toLocaleString('es-CL')}</div>
+                    </div>
+                    
+                    <div class="stat-item">
+                        <div class="stat-label">💰 Total Neto</div>
+                        <div class="stat-value" style="color: #4CAF50; font-weight: bold;">
+                            $${(totalRecaudado - totalAdelantos).toLocaleString('es-CL')}
+                        </div>
+                    </div>
             `;
         }
         
-       async function loadServicios() {
-    document.getElementById('contentArea').innerHTML = `
-        <h2 class="text-2xl font-bold mb-6">
-            <i class="fas fa-list mr-2"></i>Lista de Servicios
-        </h2>
-        <div id="serviciosLista" class="space-y-2">
-            <p class="text-gray-600">Cargando servicios...</p>
-        </div>
-    `;
-    
+        html += `
+                </div>
+                
+                <div class="desglose-pago">
+                    <h4>💳 Desglose por Forma de Pago</h4>
+                    <ul>
+                        <li>💵 Efectivo: $${(porFormaPago['Efectivo'] || 0).toLocaleString('es-CL')}</li>
+                        <li>💳 Cuenta RUT: $${(porFormaPago['Cuenta RUT'] || 0).toLocaleString('es-CL')}</li>
+                        <li>📱 Mercado Pago: $${(porFormaPago['Mercado Pago'] || 0).toLocaleString('es-CL')}</li>
+                    </ul>
+                </div>
+            </div>
+        `;
+        
+        contenido.innerHTML = html;
+        
+    } catch (error) {
+        console.error('Error:', error);
+        contenido.innerHTML = '<div class="error">Error al cargar el resumen</div>';
+    }
+}
     try {
         // Obtener servicios de hoy
         const hoy = new Date().toISOString().split('T')[0];
