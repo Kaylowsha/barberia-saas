@@ -1121,8 +1121,10 @@ async function cargarResumenAdelantos() {
         
         if (error) {
             console.error('❌ Error cargando adelantos:', error);
-            document.querySelector('.adelantos-loading').innerHTML = 
-                '<div class="text-red-600">❌ Error cargando adelantos</div>';
+           const loadingElement = document.querySelector('.adelantos-loading');
+if (loadingElement) {
+    loadingElement.innerHTML = '<div class="text-red-600">❌ Error del sistema</div>';
+}
             return;
         }
         
@@ -1137,7 +1139,12 @@ async function cargarResumenAdelantos() {
 }
 
 function mostrarResumenAdelantos(adelantos) {
-    const container = document.querySelector('.adelantos-loading').parentElement;
+    const loadingElement = document.querySelector('.adelantos-loading');
+    if (!loadingElement || !loadingElement.parentElement) {
+        console.error('❌ Elemento adelantos-loading no encontrado');
+        return;
+    }
+    const container = loadingElement.parentElement;
     
     if (!adelantos || adelantos.length === 0) {
         container.innerHTML = `
