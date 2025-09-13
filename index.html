@@ -917,7 +917,7 @@ async function cargarBarberosEnFiltroServicios() {
         
         if (error) throw error;
         
-        const select = document.getElementById('selectBarberoResumen');
+        const select = document.getElementById('selectBarberoServicios'); // ✅ CORRECTO
         if (!select) return;
         
         // Limpiar opciones actuales (mantener las 2 primeras)
@@ -1616,7 +1616,7 @@ function mostrarResumenAdelantos(adelantos) {
         
         if (error) throw error;
         
-        const select = document.getElementById('selectBarberoResumen');
+        const select = document.getElementById('selectBarberoCierre'); // ✅ CORRECTO
         if (!select) return;
         
         // Limpiar opciones actuales (mantener las 2 primeras)
