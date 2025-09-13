@@ -1276,10 +1276,13 @@ async function procesarEditarBarbero(e) {
     try {
         showLoading();
         
-        const { error } = await supabase
-            .from('usuarios')
-            .update({ nombre, email, role: rol })
-            .eq('id', id);
+        const { data, error } = await supabase
+    .from('usuarios')
+    .update({ nombre, email, role: rol })
+    .eq('id', id)
+    .select();
+
+console.log('🔄 Resultado update:', data, error);
         
         if (error) {
             alert(`Error al actualizar: ${error.message}`);
