@@ -1162,7 +1162,7 @@ const nuevoUsuario = {
 console.log('💾 Guardando en Supabase:', nuevoUsuario);
 
 const { data, error } = await supabase
-    .from('users')
+    .from('usuarios')
     .insert([nuevoUsuario])
     .select();
 
@@ -1237,7 +1237,7 @@ try {
     console.log('🔍 Intentando cargar barberos desde Supabase...');
     
     const { data: barberos, error } = await supabase
-        .from('users')
+        .from('usuarios')
         .select('id, nombre, email, role')
         .eq('barberia_id', SUPABASE_CONFIG.barberiaId)
         .eq('activo', true);
