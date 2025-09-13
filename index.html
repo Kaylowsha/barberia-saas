@@ -182,40 +182,40 @@
             hideError();
             
             try {
-                // LOGIN TEMPORAL - Sin verificación real
-                let userData = null;
-                
-                if (email === 'israelparancan.n@gmail.com') {
-                    userData = {
-                        id: '3fbc31cc-da0a-4f4a-b45b-e7a51320c92c',
-                        email: email,
-                        nombre: 'Administrador',
-                        role: 'admin',
-                        barberia_id: '79da96ae-4357-4ede-8c98-9a61c1c3378e',
-                        barberias: {
-                            id: '79da96ae-4357-4ede-8c98-9a61c1c3378e',
-                            nombre: 'NatWin',
-                            plan: 'trial'
-                        }
-                    };
-                } else if (email === 'ispn4trade@gmail.com') {
-                    userData = {
-                        id: '1a0242b8-bc7a-4e61-9e33-ac182996a950',
-                        email: email,
-                        nombre: 'Misho',
-                        role: 'empleado',
-                        barberia_id: '79da96ae-4357-4ede-8c98-9a61c1c3378e',
-                        barberias: {
-                            id: '79da96ae-4357-4ede-8c98-9a61c1c3378e',
-                            nombre: 'NatWin',
-                            plan: 'trial'
-                        }
-                    };
-                } else {
-                    showError('Usuario no encontrado. Usa uno de los emails de prueba.');
-                    hideLoading();
-                    return;
-                }
+                // LOGIN DINÁMICO - Consultar Supabase
+const { data: usuarios, error } = await supabase
+    .from('usuarios')
+    .select('*')
+    .eq('email', email)
+    .eq('activo', true)
+    .single();
+
+if (error || !usuarios) {
+    showError('Usuario no encontrado o inactivo.');
+    hideLoading();
+    return;
+}
+
+// Simular verificación de contraseña (temporal)
+if (password !== '123456') {
+    showError('Contraseña incorrecta.');
+    hideLoading();
+    return;
+}
+
+// Login exitoso
+const userData = {
+    id: usuarios.id,
+    email: usuarios.email,
+    nombre: usuarios.nombre,
+    role: usuarios.role,
+    barberia_id: usuarios.barberia_id,
+    barberias: {
+        id: usuarios.barberia_id,
+        nombre: 'NatWin', // Hardcodeado por ahora
+        plan: 'trial'
+    }
+};
                 
                 // Login exitoso
                 currentUser = userData;
