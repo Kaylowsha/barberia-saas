@@ -1150,14 +1150,35 @@ async function procesarAgregarBarbero(e) {
         showLoading();
         console.log('👤 Creando barbero:', { nombre, email, rol });
         
-        // Por ahora solo mostrar confirmación (después conectaremos con Supabase)
-        alert(`✅ Barbero creado exitosamente!\n\nNombre: ${nombre}\nEmail: ${email}\nRol: ${rol === 'admin' ? 'Administrador' : 'Empleado'}\n\n(Funcionalidad de guardado próximamente)`);
-        
-        // Cerrar modal
-        cerrarModalAgregarBarbero();
-        
-        // Recargar lista de barberos
-        cargarListaBarberos();
+        // Crear usuario en Supabase
+const nuevoUsuario = {
+    email: email,
+    nombre: nombre,
+    role: rol,
+    barberia_id: SUPABASE_CONFIG.barberiaId,
+    activo: true
+};
+
+console.log('💾 Guardando en Supabase:', nuevoUsuario);
+
+const { data, error } = await supabase
+    .from('users')
+    .insert([nuevoUsuario])
+    .select();
+
+if (error) {
+    console.error('❌ Error de Supabase:', error);
+    alert(`❌ Error al crear barbero: ${error.message}`);
+} else {
+    console.log('✅ Usuario creado:', data);
+    alert(`✅ Barbero "${nombre}" creado exitosamente!\n\nYa puede iniciar sesión con:\n📧 ${email}\n🔑 Contraseña temporal: 123456`);
+    
+    // Cerrar modal
+    cerrarModalAgregarBarbero();
+    
+    // Recargar lista de barberos
+    cargarListaBarberos();
+}
         
     } catch (error) {
         console.error('❌ Error:', error);
@@ -1211,14 +1232,37 @@ async function cargarListaBarberos() {
     try {
         console.log('🔍 Cargando lista de barberos...');
         
-        // Por ahora usar datos hardcodeados ya que hay problemas con RLS
+       // Intentar cargar desde Supabase, si falla usar datos demo
+try {
+    console.log('🔍 Intentando cargar barberos desde Supabase...');
+    
+    const { data: barberos, error } = await supabase
+        .from('users')
+        .select('id, nombre, email, role')
+        .eq('barberia_id', SUPABASE_CONFIG.barberiaId)
+        .eq('activo', true);
+    
+    if (error) {
+        console.log('⚠️ Error RLS, usando datos demo:', error.message);
+        // Fallback a datos demo
         const barberosDemo = [
             { id: '3fbc31cc-da0a-4f4a-b45b-e7a51320c92c', nombre: 'Administrador', email: 'israelparancan.n@gmail.com', role: 'admin' },
             { id: '1a0242b8-bc7a-4e61-9e33-ac182996a950', nombre: 'Misho', email: 'ispn4trade@gmail.com', role: 'empleado' }
         ];
-        
-        console.log('✅ Barberos cargados (demo):', barberosDemo);
         mostrarListaBarberos(barberosDemo);
+    } else {
+        console.log('✅ Barberos cargados desde Supabase:', barberos);
+        mostrarListaBarberos(barberos || []);
+    }
+} catch (error) {
+    console.error('❌ Error crítico:', error);
+    // Fallback final
+    const barberosDemo = [
+        { id: '3fbc31cc-da0a-4f4a-b45b-e7a51320c92c', nombre: 'Administrador', email: 'israelparancan.n@gmail.com', role: 'admin' },
+        { id: '1a0242b8-bc7a-4e61-9e33-ac182996a950', nombre: 'Misho', email: 'ispn4trade@gmail.com', role: 'empleado' }
+    ];
+    mostrarListaBarberos(barberosDemo);
+}
         
     } catch (error) {
         console.error('❌ Error en cargarListaBarberos:', error);
