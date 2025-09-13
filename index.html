@@ -2565,7 +2565,7 @@ async function filtrarProductividad(periodo) {
         // Cargar servicios del período
         const { data: servicios, error } = await supabase
             .from('citas')
-            .select('realizado_por_nombre, monto_total')
+            .select('realizado_por_id, monto_total, usuarios!inner(nombre)')
             .eq('barberia_id', SUPABASE_CONFIG.barberiaId)
             .gte('fecha', fechaInicioStr)
             .lte('fecha', fechaFin);
@@ -2583,15 +2583,21 @@ async function filtrarProductividad(periodo) {
         }
         
         // Procesar datos de productividad
-        const barberos = {};
-        servicios.forEach(s => {
-            const barbero = s.realizado_por_nombre;
-            if (!barberos[barbero]) {
-                barberos[barbero] = { servicios: 0, monto: 0 };
-            }
-            barberos[barbero].servicios++;
-            barberos[barbero].monto += parseFloat(s.monto_total || 0);
-        });
+       const barberos = {};
+servicios.forEach(s => {
+    const barberoId = s.realizado_por_id;
+    const barberoNombre = s.usuarios.nombre;
+    
+    if (!barberos[barberoId]) {
+        barberos[barberoId] = { 
+            nombre: barberoNombre, 
+            servicios: 0, 
+            monto: 0 
+        };
+    }
+    barberos[barberoId].servicios++;
+    barberos[barberoId].monto += parseFloat(s.monto_total || 0);
+});
         
         if (Object.keys(barberos).length === 0) {
             container.innerHTML = `
@@ -2616,7 +2622,7 @@ async function filtrarProductividad(periodo) {
         ];
         
         let html = '<div class="space-y-3">';
-        barberosArray.forEach(([barbero, data], index) => {
+       barberosArray.forEach(([barberoId, data], index) => {
             const porcentajeServicios = Math.round((data.servicios / servicios.length) * 100);
             const promedioPorServicio = Math.round(data.monto / data.servicios);
             const color = coloresBarberos[index] || 'from-gray-500 to-gray-600';
@@ -2625,7 +2631,7 @@ async function filtrarProductividad(periodo) {
                 <div class="bg-gradient-to-r ${color} text-white p-4 rounded-lg">
                     <div class="flex justify-between items-start">
                         <div>
-                            <div class="font-bold text-lg">${barbero}</div>
+                           <div class="font-bold text-lg">${data.nombre}</div>
                             <div class="text-sm opacity-90">${data.servicios} servicios (${porcentajeServicios}%)</div>
                             <div class="text-sm opacity-90">Promedio: $${promedioPorServicio.toLocaleString('es-CL')}/servicio</div>
                         </div>
