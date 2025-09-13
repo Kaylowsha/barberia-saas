@@ -672,14 +672,9 @@ if (vista !== 'diaria') {
         .gte('created_at', fechaInicio + 'T00:00:00')
         .lte('created_at', fechaFin + 'T23:59:59');
     
-    // IMPORTANTE: Solo filtrar por activo si es vista SEMANAL
-    // Para vista MENSUAL, mostrar TODOS los adelantos (histórico completo)
-    if (vista === 'semanal') {
-        queryAdelantos = queryAdelantos.eq('activo', true);
-        console.log('📊 Vista semanal: solo adelantos activos');
-    } else {
-        console.log('📊 Vista mensual/rango: todos los adelantos históricos');
-    }
+   // NUEVA LÓGICA: Siempre mostrar TODOS los adelantos del período (sin filtrar por activo)
+// Los adelantos son datos históricos que siempre deben aparecer para cálculos correctos
+console.log('📊 Mostrando todos los adelantos históricos del período');
     
     // Aplicar filtro según rol y selección (IGUAL que servicios)
     if (userRole === 'empleado') {
@@ -1317,14 +1312,11 @@ function mostrarResumenAdelantos(adelantos) {
             <h3 class="text-lg font-bold mb-4">🔵 Resumen de Adelantos Semanal</h3>
             <div class="text-center py-6">
                 <div class="text-gray-500 mb-4">💰 No hay adelantos esta semana</div>
-                <div class="flex justify-center space-x-4">
-                    <button class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700" onclick="alert('Historial próximamente')">
-                        📋 Historial Completo
-                    </button>
-                    <button class="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700" onclick="limpiarSemanaAdelantos()">
-                        🗑️ Limpiar Semana
-                    </button>
-                </div>
+                <div class="flex justify-center">
+    <button class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700" onclick="alert('Historial próximamente')">
+        📋 Historial Completo
+    </button>
+</div>
             </div>
         `;
         return;
@@ -1363,58 +1355,18 @@ function mostrarResumenAdelantos(adelantos) {
         </div>
     `;
     
-    html += `
-        </div>
-        <div class="flex justify-center space-x-4">
-            <button class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700" onclick="alert('Historial próximamente')">
-                📋 Historial Completo
-            </button>
-            <button class="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700" onclick="limpiarSemanaAdelantos()">
-                🗑️ Limpiar Semana
-            </button>
-        </div>
-    `;
+  html += `
+    </div>
+    <div class="flex justify-center space-x-4">
+        <button class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700" onclick="alert('Historial próximamente')">
+            📋 Historial Completo
+        </button>
+    </div>
+`;
     
     container.innerHTML = html;
 }
-//Funcion para boton Limpiar Semana
-async function limpiarSemanaAdelantos() {
-    if (!confirm('⚠️ ¿Limpiar todos los adelantos de esta semana? Esta acción no se puede deshacer.')) {
-        return;
-    }
-    
-    try {
-        showLoading();
-        console.log('🗑️ Limpiando TODOS los adelantos activos...');
-        
-        // SIMPLIFICADO: Limpiar TODOS los adelantos activos sin filtro de fecha
-        const { data, error } = await supabase
-            .from('adelantos')
-            .update({ activo: false })
-            .eq('barberia_id', SUPABASE_CONFIG.barberiaId)
-            .eq('activo', true)
-            .select(); // Para ver qué se actualizó
-        
-        if (error) {
-            console.error('❌ Error limpiando adelantos:', error);
-            alert(`❌ Error al limpiar adelantos: ${error.message}`);
-        } else {
-            console.log('✅ Adelantos actualizados:', data);
-            alert(`✅ Adelantos limpiados: ${data ? data.length : 0} registros actualizados`);
-            
-            // Forzar recarga de la página
-            setTimeout(() => {
-                location.reload();
-            }, 1000);
-        }
-        
-    } catch (error) {
-        console.error('❌ Error crítico:', error);
-        alert('❌ Error del sistema: ' + error.message);
-    } finally {
-        hideLoading();
-    }
-}
+
     // ===============================
         // PESTAÑA: CIERRE DE CAJA
         // ===============================
