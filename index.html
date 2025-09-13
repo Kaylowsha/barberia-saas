@@ -1251,9 +1251,21 @@ try {
         ];
         mostrarListaBarberos(barberosDemo);
     } else {
-        console.log('✅ Barberos cargados desde Supabase:', barberos);
-        mostrarListaBarberos(barberos || []);
+    console.log('✅ Barberos cargados desde Supabase:', barberos);
+    console.log('📊 Cantidad de barberos:', barberos ? barberos.length : 0);
+    
+    // Si no hay barberos en Supabase, usar demo
+    if (!barberos || barberos.length === 0) {
+        console.log('🔄 No hay barberos en Supabase, usando demo');
+        const barberosDemo = [
+            { id: '3fbc31cc-da0a-4f4a-b45b-e7a51320c92c', nombre: 'Administrador', email: 'israelparancan.n@gmail.com', role: 'admin' },
+            { id: '1a0242b8-bc7a-4e61-9e33-ac182996a950', nombre: 'Misho', email: 'ispn4trade@gmail.com', role: 'empleado' }
+        ];
+        mostrarListaBarberos(barberosDemo);
+    } else {
+        mostrarListaBarberos(barberos);
     }
+}
 } catch (error) {
     console.error('❌ Error crítico:', error);
     // Fallback final
