@@ -1203,6 +1203,99 @@ if (error) {
     }
 }
         // ===============================
+// MODAL EDITAR BARBERO
+// ===============================
+function mostrarModalEditarBarbero(id, nombre, email, rol) {
+    const modalHTML = `
+        <div id="modalEditarBarbero" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold">✏️ Editar Barbero</h3>
+                    <button onclick="cerrarModalEditarBarbero()" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                
+                <form id="formEditarBarbero">
+                    <input type="hidden" id="editarBarberoId" value="${id}">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Nombre Completo *</label>
+                            <input type="text" id="editarNombreBarbero" value="${nombre}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Email *</label>
+                            <input type="email" id="editarEmailBarbero" value="${email}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Rol *</label>
+                            <select id="editarRolBarbero" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required>
+                                <option value="empleado" ${rol === 'empleado' ? 'selected' : ''}>Empleado</option>
+                                <option value="admin" ${rol === 'admin' ? 'selected' : ''}>Administrador</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="flex space-x-3 mt-6">
+                        <button type="button" onclick="cerrarModalEditarBarbero()" class="flex-1 bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">
+                            💾 Guardar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    document.getElementById('formEditarBarbero').addEventListener('submit', procesarEditarBarbero);
+}
+
+function cerrarModalEditarBarbero() {
+    const modal = document.getElementById('modalEditarBarbero');
+    if (modal) modal.remove();
+}
+
+async function procesarEditarBarbero(e) {
+    e.preventDefault();
+    
+    const id = document.getElementById('editarBarberoId').value;
+    const nombre = document.getElementById('editarNombreBarbero').value.trim();
+    const email = document.getElementById('editarEmailBarbero').value.trim();
+    const rol = document.getElementById('editarRolBarbero').value;
+    
+    if (!nombre || !email || !rol) {
+        alert('Por favor completa todos los campos');
+        return;
+    }
+    
+    try {
+        showLoading();
+        
+        const { error } = await supabase
+            .from('usuarios')
+            .update({ nombre, email, role: rol })
+            .eq('id', id);
+        
+        if (error) {
+            alert(`Error al actualizar: ${error.message}`);
+        } else {
+            alert(`✅ Barbero "${nombre}" actualizado correctamente`);
+            cerrarModalEditarBarbero();
+            cargarListaBarberos();
+        }
+        
+    } catch (error) {
+        alert('Error del sistema: ' + error.message);
+    } finally {
+        hideLoading();
+    }
+}
+        // ===============================
         // PESTAÑAS PENDIENTES
         // ===============================
         function loadGestionBarberos() {
@@ -1329,9 +1422,9 @@ function mostrarListaBarberos(barberos) {
                         <div class="mb-3">${roleBadge}</div>
                     </div>
                     <div class="flex space-x-2">
-                        <button class="bg-gray-100 text-gray-600 px-3 py-2 rounded hover:bg-gray-200" onclick="alert('Editar: ${barbero.nombre}')">
-                            ✏️
-                        </button>
+                       <button class="bg-gray-100 text-gray-600 px-3 py-2 rounded hover:bg-gray-200" onclick="mostrarModalEditarBarbero('${barbero.id}', '${barbero.nombre}', '${barbero.email}', '${barbero.role}')">
+                    ✏️
+                  </button>
                         <button class="bg-red-100 text-red-600 px-3 py-2 rounded hover:bg-red-200" onclick="confirmarEliminarBarbero('${barbero.id}', '${barbero.nombre}')">
                             🗑️
                         </button>
