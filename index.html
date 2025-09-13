@@ -823,17 +823,18 @@ console.log('📊 Mostrando todos los adelantos históricos del período');
     }
 }
         
-   async function cargarBarberosEnFiltro() {
+  async function cargarBarberosEnFiltro() {
     try {
-        console.log('🔍 Cargando barberos para el filtro...');
+        console.log('🔍 Cargando barberos dinámicamente para filtro...');
         
-        // Usar barberos hardcodeados por problemas con RLS
-        const barberosDemo = [
-            { id: '3fbc31cc-da0a-4f4a-b45b-e7a51320c92c', nombre: 'Administrador' },
-            { id: '1a0242b8-bc7a-4e61-9e33-ac182996a950', nombre: 'Misho' }
-        ];
+        const { data: barberos, error } = await supabase
+            .from('usuarios')
+            .select('id, nombre')
+            .eq('barberia_id', SUPABASE_CONFIG.barberiaId)
+            .eq('activo', true);
         
-        console.log('✅ Barberos cargados para filtro:', barberosDemo);
+        if (error) throw error;
+        
         const select = document.getElementById('selectBarberoResumen');
         if (!select) return;
         
@@ -842,18 +843,18 @@ console.log('📊 Mostrando todos los adelantos históricos del período');
             select.removeChild(select.lastChild);
         }
         
-       // Agregar solo empleados (no incluir admin porque ya tiene "Mi Resumen")
-barberosDemo.forEach(barbero => {
-    if (barbero.id !== currentUser.id) {  // No agregar al admin actual
-        const option = document.createElement('option');
-        option.value = barbero.id;
-        option.textContent = barbero.nombre;
-        select.appendChild(option);
-    }
-});
+        // Agregar todos los barberos dinámicamente
+        barberos.forEach(barbero => {
+            if (barbero.id !== currentUser.id) {  // No agregar al usuario actual
+                const option = document.createElement('option');
+                option.value = barbero.id;
+                option.textContent = barbero.nombre;
+                select.appendChild(option);
+            }
+        });
         
     } catch (error) {
-        console.error('❌ Error crítico cargando barberos:', error);
+        console.error('❌ Error cargando barberos:', error);
     }
 }
         
@@ -905,23 +906,37 @@ barberosDemo.forEach(barbero => {
 }
 
 async function cargarBarberosEnFiltroServicios() {
-    try {
-        const barberosDemo = [
-            { id: '1a0242b8-bc7a-4e61-9e33-ac182996a950', nombre: 'Misho' }
-        ];
+   try {
+        console.log('🔍 Cargando barberos dinámicamente para filtro...');
         
-        const select = document.getElementById('selectBarberoServicios');
+        const { data: barberos, error } = await supabase
+            .from('usuarios')
+            .select('id, nombre')
+            .eq('barberia_id', SUPABASE_CONFIG.barberiaId)
+            .eq('activo', true);
+        
+        if (error) throw error;
+        
+        const select = document.getElementById('selectBarberoResumen');
         if (!select) return;
         
-        barberosDemo.forEach(barbero => {
-            const option = document.createElement('option');
-            option.value = barbero.id;
-            option.textContent = barbero.nombre;
-            select.appendChild(option);
+        // Limpiar opciones actuales (mantener las 2 primeras)
+        while (select.children.length > 2) {
+            select.removeChild(select.lastChild);
+        }
+        
+        // Agregar todos los barberos dinámicamente
+        barberos.forEach(barbero => {
+            if (barbero.id !== currentUser.id) {  // No agregar al usuario actual
+                const option = document.createElement('option');
+                option.value = barbero.id;
+                option.textContent = barbero.nombre;
+                select.appendChild(option);
+            }
         });
         
     } catch (error) {
-        console.error('❌ Error cargando barberos para servicios:', error);
+        console.error('❌ Error cargando barberos:', error);
     }
 }
 
@@ -1591,26 +1606,38 @@ function mostrarResumenAdelantos(adelantos) {
         
         async function cargarBarberosEnFiltroCierre() {
             try {
-                console.log('🔍 Cargando barberos para cierre...');
-                
-                const barberosDemo = [
-                    { id: '1a0242b8-bc7a-4e61-9e33-ac182996a950', nombre: 'Misho' }
-                ];
-                
-                const select = document.getElementById('selectBarberoCierre');
-                if (!select) return;
-                
-                barberosDemo.forEach(barbero => {
-                    const option = document.createElement('option');
-                    option.value = barbero.id;
-                    option.textContent = barbero.nombre;
-                    select.appendChild(option);
-                });
-                
-            } catch (error) {
-                console.error('❌ Error cargando barberos para cierre:', error);
-            }
+        console.log('🔍 Cargando barberos dinámicamente para filtro...');
+        
+        const { data: barberos, error } = await supabase
+            .from('usuarios')
+            .select('id, nombre')
+            .eq('barberia_id', SUPABASE_CONFIG.barberiaId)
+            .eq('activo', true);
+        
+        if (error) throw error;
+        
+        const select = document.getElementById('selectBarberoResumen');
+        if (!select) return;
+        
+        // Limpiar opciones actuales (mantener las 2 primeras)
+        while (select.children.length > 2) {
+            select.removeChild(select.lastChild);
         }
+        
+        // Agregar todos los barberos dinámicamente
+        barberos.forEach(barbero => {
+            if (barbero.id !== currentUser.id) {  // No agregar al usuario actual
+                const option = document.createElement('option');
+                option.value = barbero.id;
+                option.textContent = barbero.nombre;
+                select.appendChild(option);
+            }
+        });
+        
+    } catch (error) {
+        console.error('❌ Error cargando barberos:', error);
+    }
+}
         
         function cambiarVistaCierre() {
             const vista = document.getElementById('vistaCierre').value;
