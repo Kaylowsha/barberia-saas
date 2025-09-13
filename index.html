@@ -561,7 +561,7 @@
     setTimeout(function() {
         const fechaInput = document.getElementById('fechaResumen');
         if (fechaInput) {
-            fechaInput.value = new Date().toISOString().split('T')[0];
+            fechaInput.value = new Date().toLocaleDateString('sv-SE');
         }
         
         // Si es admin, mostrar filtro de barberos
@@ -783,7 +783,7 @@ console.log('📊 Mostrando todos los adelantos históricos del período');
         setTimeout(function() {
             var fechaInput = document.getElementById('fechaResumen');
             if (fechaInput) {
-                fechaInput.value = new Date().toISOString().split('T')[0];
+                fechaInput.value = new Date().toLocaleDateString('sv-SE');
                 cargarDatosResumen();
             }
         }, 100);
@@ -793,7 +793,7 @@ console.log('📊 Mostrando todos los adelantos históricos del período');
         setTimeout(function() {
             var fechaInput = document.getElementById('fechaResumen');
             if (fechaInput) {
-                fechaInput.value = new Date().toISOString().split('T')[0];
+                fechaInput.value = new Date().toLocaleDateString('sv-SE');
                 cargarDatosResumen();
             }
         }, 100);
@@ -1425,7 +1425,7 @@ function mostrarResumenAdelantos(adelantos) {
             setTimeout(() => {
                 const fechaInput = document.getElementById('fechaCierre');
                 if (fechaInput) {
-                    fechaInput.value = new Date().toISOString().split('T')[0];
+                   fechaInput.value = new Date().toLocaleDateString('sv-SE');
                 }
                 cargarBarberosEnFiltroCierre();
                 cargarDatosCierre();
@@ -1494,7 +1494,7 @@ function mostrarResumenAdelantos(adelantos) {
                 if (vista === 'diaria' || vista === 'semanal') {
                     const fechaInput = document.getElementById('fechaCierre');
                     if (fechaInput) {
-                        fechaInput.value = new Date().toISOString().split('T')[0];
+                        fechaInput.value = new Date().toLocaleDateString('sv-SE');
                     }
                 } else if (vista === 'rango') {
                     const now = new Date();
