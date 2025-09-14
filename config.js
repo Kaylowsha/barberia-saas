@@ -6,7 +6,7 @@
 const SUPABASE_CONFIG = {
     url: 'https://tlireovgyvnsomovncji.supabase.co',
     anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRsaXJlb3ZneXZuc29tb3ZuY2ppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2MDYzODksImV4cCI6MjA3MzE4MjM4OX0.7d4WaX-bxlAFJCLS6cPhCOFONsSZxX7Oc0153Dpjrl0',
-    barberiaId: '06462018-5b3d-47e4-9cae-56d405bd9138' // ID de Rulitos  
+    barberiaId: '79da96ae-4357-4ede-8c98-9a61c1c3378e' // ID de NATWIN 
 };
 
 // Usuarios de prueba (temporal mientras no tengamos auth real)
