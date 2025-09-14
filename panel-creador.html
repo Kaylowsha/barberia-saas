@@ -963,34 +963,56 @@ function updateMobileMetrics() {
                         
                         <!-- Contenido móvil -->
                         <div class="p-mobile">
-                            <form id="formNuevaBarberia" class="space-y-6">
-                                <div>
-                                    <label class="block text-mobile-base font-medium text-gray-700 mb-3">Nombre de la Barbería *</label>
-                                    <input type="text" id="nombreBarberia" class="w-full px-4 py-4 border border-gray-300 rounded-lg text-mobile-base" placeholder="Ej: Barbería Central" required>
-                                </div>
-                                
-                                <div>
-                                    <label class="block text-mobile-base font-medium text-gray-700 mb-3">Plan Inicial *</label>
-                                    <select id="planInicial" class="w-full px-4 py-4 border border-gray-300 rounded-lg text-mobile-base" required>
-                                        <option value="trial">🎁 Trial (15 días gratis)</option>
-                                        <option value="pagado">💰 Pagado (inmediato)</option>
-                                    </select>
-                                </div>
-                                
-                                <div id="diasTrial">
-                                    <label class="block text-mobile-base font-medium text-gray-700 mb-3">Días de Trial</label>
-                                    <input type="number" id="diasTrialInput" class="w-full px-4 py-4 border border-gray-300 rounded-lg text-mobile-base" value="15" min="1" max="90">
-                                </div>
-                                
-                                <div class="flex flex-col gap-3 pt-4">
-                                    <button type="submit" class="btn-mobile-primary">
-                                        🏢 Crear Barbería
-                                    </button>
-                                    <button type="button" onclick="cerrarModalNuevaBarberia()" class="btn-mobile-secondary">
-                                        Cancelar
-                                    </button>
-                                </div>
-                            </form>
+                           <form id="formNuevaBarberia" class="space-y-6">
+    <div>
+        <label class="block text-mobile-base font-medium text-gray-700 mb-3">Nombre de la Barbería *</label>
+        <input type="text" id="nombreBarberia" class="w-full px-4 py-4 border border-gray-300 rounded-lg text-mobile-base" placeholder="Ej: Barbería Central" required>
+    </div>
+    
+    <div class="border-t pt-4">
+        <h4 class="text-mobile-base font-semibold text-gray-800 mb-3">👤 Datos del Administrador</h4>
+        
+        <div class="space-y-4">
+            <div>
+                <label class="block text-mobile-base font-medium text-gray-700 mb-2">Nombre del Admin *</label>
+                <input type="text" id="nombreAdmin" class="w-full px-4 py-4 border border-gray-300 rounded-lg text-mobile-base" placeholder="Ej: Carlos Pérez" required>
+            </div>
+            
+            <div>
+                <label class="block text-mobile-base font-medium text-gray-700 mb-2">Email del Admin *</label>
+                <input type="email" id="emailAdmin" class="w-full px-4 py-4 border border-gray-300 rounded-lg text-mobile-base" placeholder="admin@barberia.com" required>
+            </div>
+            
+            <div>
+                <label class="block text-mobile-base font-medium text-gray-700 mb-2">Contraseña Auto-generada</label>
+                <input type="text" id="passwordAdmin" class="w-full px-4 py-4 border border-gray-300 rounded-lg bg-gray-50 text-mobile-base" value="barberia2024" readonly>
+                <p class="text-xs text-gray-500 mt-1">Puedes cambiarla después del primer acceso</p>
+            </div>
+        </div>
+    </div>
+    
+    <div>
+        <label class="block text-mobile-base font-medium text-gray-700 mb-3">Plan Inicial *</label>
+        <select id="planInicial" class="w-full px-4 py-4 border border-gray-300 rounded-lg text-mobile-base" required>
+            <option value="trial">🎁 Trial (15 días gratis)</option>
+            <option value="pagado">💰 Pagado (inmediato)</option>
+        </select>
+    </div>
+    
+    <div id="diasTrial">
+        <label class="block text-mobile-base font-medium text-gray-700 mb-3">Días de Trial</label>
+        <input type="number" id="diasTrialInput" class="w-full px-4 py-4 border border-gray-300 rounded-lg text-mobile-base" value="15" min="1" max="90">
+    </div>
+    
+    <div class="flex flex-col gap-3 pt-4">
+        <button type="submit" class="btn-mobile-primary">
+            🏢 Crear Barbería + Admin
+        </button>
+        <button type="button" onclick="cerrarModalNuevaBarberia()" class="btn-mobile-secondary">
+            Cancelar
+        </button>
+    </div>
+</form>
                         </div>
                         ` : `
                         <!-- Modal desktop normal -->
@@ -1002,36 +1024,56 @@ function updateMobileMetrics() {
                                 </button>
                             </div>
                             
-                            <form id="formNuevaBarberia">
-                                <div class="space-y-4">
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Nombre de la Barbería *</label>
-                                        <input type="text" id="nombreBarberia" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" placeholder="Ej: Barbería Central" required>
-                                    </div>
-                                    
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Plan Inicial *</label>
-                                        <select id="planInicial" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" required>
-                                            <option value="trial">🎁 Trial (15 días gratis)</option>
-                                            <option value="pagado">💰 Pagado (inmediato)</option>
-                                        </select>
-                                    </div>
-                                    
-                                    <div id="diasTrial">
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Días de Trial</label>
-                                        <input type="number" id="diasTrialInput" class="w-full px-4 py-2 border border-gray-300 rounded-lg" value="15" min="1" max="90">
-                                    </div>
-                                </div>
-                                
-                                <div class="flex space-x-3 mt-6">
-                                    <button type="button" onclick="cerrarModalNuevaBarberia()" class="flex-1 bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600">
-                                        Cancelar
-                                    </button>
-                                    <button type="submit" class="flex-1 bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700">
-                                        🏢 Crear Barbería
-                                    </button>
-                                </div>
-                            </form>
+                           <form id="formNuevaBarberia" class="space-y-6">
+    <div>
+        <label class="block text-mobile-base font-medium text-gray-700 mb-3">Nombre de la Barbería *</label>
+        <input type="text" id="nombreBarberia" class="w-full px-4 py-4 border border-gray-300 rounded-lg text-mobile-base" placeholder="Ej: Barbería Central" required>
+    </div>
+    
+    <div class="border-t pt-4">
+        <h4 class="text-mobile-base font-semibold text-gray-800 mb-3">👤 Datos del Administrador</h4>
+        
+        <div class="space-y-4">
+            <div>
+                <label class="block text-mobile-base font-medium text-gray-700 mb-2">Nombre del Admin *</label>
+                <input type="text" id="nombreAdmin" class="w-full px-4 py-4 border border-gray-300 rounded-lg text-mobile-base" placeholder="Ej: Carlos Pérez" required>
+            </div>
+            
+            <div>
+                <label class="block text-mobile-base font-medium text-gray-700 mb-2">Email del Admin *</label>
+                <input type="email" id="emailAdmin" class="w-full px-4 py-4 border border-gray-300 rounded-lg text-mobile-base" placeholder="admin@barberia.com" required>
+            </div>
+            
+            <div>
+                <label class="block text-mobile-base font-medium text-gray-700 mb-2">Contraseña Auto-generada</label>
+                <input type="text" id="passwordAdmin" class="w-full px-4 py-4 border border-gray-300 rounded-lg bg-gray-50 text-mobile-base" value="barberia2024" readonly>
+                <p class="text-xs text-gray-500 mt-1">Puedes cambiarla después del primer acceso</p>
+            </div>
+        </div>
+    </div>
+    
+    <div>
+        <label class="block text-mobile-base font-medium text-gray-700 mb-3">Plan Inicial *</label>
+        <select id="planInicial" class="w-full px-4 py-4 border border-gray-300 rounded-lg text-mobile-base" required>
+            <option value="trial">🎁 Trial (15 días gratis)</option>
+            <option value="pagado">💰 Pagado (inmediato)</option>
+        </select>
+    </div>
+    
+    <div id="diasTrial">
+        <label class="block text-mobile-base font-medium text-gray-700 mb-3">Días de Trial</label>
+        <input type="number" id="diasTrialInput" class="w-full px-4 py-4 border border-gray-300 rounded-lg text-mobile-base" value="15" min="1" max="90">
+    </div>
+    
+    <div class="flex flex-col gap-3 pt-4">
+        <button type="submit" class="btn-mobile-primary">
+            🏢 Crear Barbería + Admin
+        </button>
+        <button type="button" onclick="cerrarModalNuevaBarberia()" class="btn-mobile-secondary">
+            Cancelar
+        </button>
+    </div>
+</form>
                         </div>
                         `}
                     </div>
@@ -1062,54 +1104,129 @@ function updateMobileMetrics() {
         }
         
         async function procesarNuevaBarberia(e) {
-            e.preventDefault();
-            
-            const nombre = document.getElementById('nombreBarberia').value.trim();
-            const plan = document.getElementById('planInicial').value;
-            const diasTrial = parseInt(document.getElementById('diasTrialInput').value) || 15;
-            
-            if (!nombre) {
-                alert('❌ Por favor ingresa el nombre de la barbería');
-                return;
-            }
-            
-            try {
-                showLoading();
-                
-                let trialHasta = null;
-                if (plan === 'trial') {
-                    const fecha = new Date(getFechaChile());
-                    fecha.setDate(fecha.getDate() + diasTrial);
-                    trialHasta = fecha.toISOString().split('T')[0];
-                }
-                
-                const nuevaBarberia = {
-                    nombre: nombre,
-                    activa: true,
-                    plan: plan,
-                    trial_hasta: trialHasta
-                };
-                
-                const { data, error } = await supabase
-                    .from('barberias')
-                    .insert([nuevaBarberia])
-                    .select();
-                
-                if (error) throw error;
-                
-                alert(`✅ Barbería "${nombre}" creada exitosamente!\n\n${plan === 'trial' ? `🎁 Trial activado por ${diasTrial} días` : '💰 Plan pagado activo'}`);
-                
-                cerrarModalNuevaBarberia();
-                await cargarListaBarberias();
-                
-            } catch (error) {
-                console.error('❌ Error:', error);
-                alert('❌ Error al crear barbería: ' + error.message);
-            } finally {
-                hideLoading();
-            }
+    e.preventDefault();
+    
+    const nombre = document.getElementById('nombreBarberia').value.trim();
+    const nombreAdmin = document.getElementById('nombreAdmin').value.trim();
+    const emailAdmin = document.getElementById('emailAdmin').value.trim();
+    const passwordAdmin = document.getElementById('passwordAdmin').value;
+    const plan = document.getElementById('planInicial').value;
+    const diasTrial = parseInt(document.getElementById('diasTrialInput').value) || 15;
+    
+    // Validaciones
+    if (!nombre || !nombreAdmin || !emailAdmin) {
+        alert('❌ Por favor completa todos los campos obligatorios');
+        return;
+    }
+    
+    if (!emailAdmin.includes('@')) {
+        alert('❌ Por favor ingresa un email válido para el administrador');
+        return;
+    }
+    
+    try {
+        showLoading();
+        
+        // PASO 1: Crear la barbería
+        let trialHasta = null;
+        if (plan === 'trial') {
+            const fecha = new Date(getFechaChile());
+            fecha.setDate(fecha.getDate() + diasTrial);
+            trialHasta = fecha.toISOString().split('T')[0];
         }
         
+        const nuevaBarberia = {
+            nombre: nombre,
+            activa: true,
+            plan: plan,
+            trial_hasta: trialHasta
+        };
+        
+        console.log('💾 Creando barbería:', nuevaBarberia);
+        
+        const { data: barberiaData, error: barberiaError } = await supabase
+            .from('barberias')
+            .insert([nuevaBarberia])
+            .select();
+        
+        if (barberiaError) throw barberiaError;
+        
+        const barberiaId = barberiaData[0].id;
+        console.log('✅ Barbería creada con ID:', barberiaId);
+        
+        // PASO 2: Crear el usuario administrador
+        const nuevoAdmin = {
+            email: emailAdmin,
+            nombre: nombreAdmin,
+            role: 'admin',
+            barberia_id: barberiaId,
+            activo: true
+        };
+        
+        console.log('👤 Creando administrador:', nuevoAdmin);
+        
+        const { data: adminData, error: adminError } = await supabase
+            .from('usuarios')
+            .insert([nuevoAdmin])
+            .select();
+        
+        if (adminError) throw adminError;
+        
+        console.log('✅ Administrador creado:', adminData);
+        
+        // PASO 3: Crear servicios básicos para la barbería
+        const serviciosBasicos = [
+            { nombre: 'Corte Tradicional - Estudiante', barberia_id: barberiaId, activo: true },
+            { nombre: 'Corte Tijera', barberia_id: barberiaId, activo: true },
+            { nombre: 'Fade - Degradados', barberia_id: barberiaId, activo: true },
+            { nombre: 'Barba Rasurado', barberia_id: barberiaId, activo: true },
+            { nombre: 'Perfilado Barba', barberia_id: barberiaId, activo: true },
+            { nombre: 'Barba Premium', barberia_id: barberiaId, activo: true },
+            { nombre: 'Rasurado de Barba con Vapor', barberia_id: barberiaId, activo: true },
+            { nombre: 'Limpieza Facial Premium', barberia_id: barberiaId, activo: true },
+            { nombre: 'Servicio Full', barberia_id: barberiaId, activo: true },
+            { nombre: 'Cejas', barberia_id: barberiaId, activo: true },
+            { nombre: 'Diseños', barberia_id: barberiaId, activo: true },
+            { nombre: 'Líneas', barberia_id: barberiaId, activo: true }
+        ];
+        
+        const { error: serviciosError } = await supabase
+            .from('services')
+            .insert(serviciosBasicos);
+        
+        if (serviciosError) {
+            console.log('⚠️ Error creando servicios (no crítico):', serviciosError);
+        } else {
+            console.log('✅ Servicios básicos creados');
+        }
+        
+        // Mensaje de éxito con credenciales
+        const mensaje = `✅ ¡Barbería "${nombre}" creada exitosamente!
+
+📧 CREDENCIALES DEL ADMINISTRADOR:
+- URL: ${window.location.origin}/
+- Email: ${emailAdmin}
+- Contraseña: ${passwordAdmin}
+
+📝 DETALLES:
+- Plan: ${plan === 'trial' ? `🎁 Trial por ${diasTrial} días` : '💰 Plan pagado activo'}
+- Administrador: ${nombreAdmin}
+- 12 servicios básicos configurados
+
+🚀 El administrador ya puede iniciar sesión y comenzar a usar el sistema.`;
+
+        alert(mensaje);
+        
+        cerrarModalNuevaBarberia();
+        await cargarListaBarberias();
+        
+    } catch (error) {
+        console.error('❌ Error crítico:', error);
+        alert(`❌ Error al crear barbería: ${error.message}\n\nPor favor verifica la conexión a la base de datos.`);
+    } finally {
+        hideLoading();
+    }
+}  
         // ===============================
         // MÉTRICAS Y ESTADÍSTICAS
         // ===============================
