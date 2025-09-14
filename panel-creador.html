@@ -1201,27 +1201,17 @@ function updateMobileMetrics() {
         }
         
         // Mensaje de éxito con credenciales
-       const mensaje = `✅ ¡Barbería "${nombre}" creada exitosamente!
+      const mensaje = `Barberia "${nombre}" creada exitosamente!
 
-📝 PRÓXIMO PASO MANUAL:
+PROXIMO PASO MANUAL:
 Debes crear el usuario administrador en Supabase:
 
-📧 Email: ${emailAdmin}
-👤 Nombre: ${nombreAdmin}
-🔑 Contraseña: barberia2024
+Email: ${emailAdmin}
+Nombre: ${nombreAdmin}
+Contraseña: barberia2024
 
-📊 DETALLES:
-- Plan: ${plan === 'trial' ? `🎁 Trial por ${diasTrial} días` : '💰 Plan pagado activo'}`;
-
-📧 CREDENCIALES DEL ADMINISTRADOR:
-- URL: ${window.location.origin}/
-- Email: ${emailAdmin}
-- Contraseña: ${passwordAdmin}
-
-📝 DETALLES:
-- Plan: ${plan === 'trial' ? `🎁 Trial por ${diasTrial} días` : '💰 Plan pagado activo'}
-- Administrador: ${nombreAdmin}
-- 12 servicios básicos configurados
+DETALLES:
+Plan: ${plan === 'trial' ? `Trial por ${diasTrial} dias` : 'Plan pagado activo'}`;
 
 🚀 El administrador ya puede iniciar sesión y comenzar a usar el sistema.`;
 
