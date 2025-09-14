@@ -1154,7 +1154,7 @@ function updateMobileMetrics() {
         const barberiaId = barberiaData[0].id;
         console.log('✅ Barbería creada con ID:', barberiaId);
         
-        // PASO 2: Crear el usuario administrador
+     /*   // PASO 2: Crear el usuario administrador
         const nuevoAdmin = {
             email: emailAdmin,
             nombre: nombreAdmin,
@@ -1172,7 +1172,7 @@ function updateMobileMetrics() {
         
         if (adminError) throw adminError;
         
-        console.log('✅ Administrador creado:', adminData);
+        console.log('✅ Administrador creado:', adminData); */
         
         // PASO 3: Crear servicios básicos para la barbería
         const serviciosBasicos = [
@@ -1201,7 +1201,17 @@ function updateMobileMetrics() {
         }
         
         // Mensaje de éxito con credenciales
-        const mensaje = `✅ ¡Barbería "${nombre}" creada exitosamente!
+       const mensaje = `✅ ¡Barbería "${nombre}" creada exitosamente!
+
+📝 PRÓXIMO PASO MANUAL:
+Debes crear el usuario administrador en Supabase:
+
+📧 Email: ${emailAdmin}
+👤 Nombre: ${nombreAdmin}
+🔑 Contraseña: barberia2024
+
+📊 DETALLES:
+- Plan: ${plan === 'trial' ? `🎁 Trial por ${diasTrial} días` : '💰 Plan pagado activo'}`;
 
 📧 CREDENCIALES DEL ADMINISTRADOR:
 - URL: ${window.location.origin}/
