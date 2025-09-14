@@ -815,7 +815,7 @@ console.log('📊 Mostrando todos los adelantos históricos del período');
         setTimeout(function() {
             var fechaInput = document.getElementById('fechaResumen');
             if (fechaInput) {
-                fechaInput.value = new Date().toLocaleDateString('sv-SE');
+                fechaInput.value = getFechaChile();  // ✅ CORRECTO
                 cargarDatosResumen();
             }
         }, 100);
@@ -1091,7 +1091,7 @@ function cambiarVistaServicios() {
         setTimeout(() => {
             const fechaInput = document.getElementById('fechaServicios');
             if (fechaInput) {
-                fechaInput.value = new Date().toLocaleDateString('sv-SE');
+                fechaInput.value = getFechaChile();  // ✅ CORRECTO
                 cargarListaServicios();
             }
         }, 100);
