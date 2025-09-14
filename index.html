@@ -1452,12 +1452,37 @@ function mostrarListaBarberos(barberos) {
     container.innerHTML = html;
 }
 
-function confirmarEliminarBarbero(barberoId, nombre) {
-    if (confirm(`¿Eliminar barbero "${nombre}"? Esta acción no se puede deshacer.`)) {
-        alert(`Eliminar barbero: ${nombre} (ID: ${barberoId})`);
+async function confirmarEliminarBarbero(barberoId, nombre) {
+    if (!confirm(`¿Desactivar barbero "${nombre}"?\n\n⚠️ El barbero ya no podrá:\n• Iniciar sesión\n• Registrar servicios\n• Recibir adelantos\n\n✅ Sus datos históricos se mantendrán.`)) {
+        return;
+    }
+    
+    try {
+        showLoading();
+        console.log(`🗑️ Desactivando barbero: ${nombre} (${barberoId})`);
+        
+        const { data, error } = await supabase
+            .from('usuarios')
+            .update({ activo: false })
+            .eq('id', barberoId)
+            .eq('barberia_id', SUPABASE_CONFIG.barberiaId)
+            .select();
+        
+        if (error) {
+            console.error('❌ Error:', error);
+            alert(`❌ Error al desactivar: ${error.message}`);
+        } else {
+            alert(`✅ Barbero "${nombre}" desactivado correctamente.\n\nYa no podrá acceder al sistema.`);
+            cargarListaBarberos(); // Recargar lista
+        }
+        
+    } catch (error) {
+        console.error('❌ Error crítico:', error);
+        alert('❌ Error del sistema');
+    } finally {
+        hideLoading();
     }
 }
-
 function mostrarFormularioAdelanto(barberoId, nombre) {
     const monto = prompt(`💰 Ingresa el monto del adelanto para ${nombre}:`);
     if (monto && !isNaN(monto) && parseFloat(monto) > 0) {
@@ -2569,6 +2594,7 @@ async function filtrarProductividad(periodo) {
             .eq('barberia_id', SUPABASE_CONFIG.barberiaId)
             .gte('fecha', fechaInicioStr)
             .lte('fecha', fechaFin);
+            .eq('usuarios.activo', true)
         
         if (error) throw error;
         
