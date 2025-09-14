@@ -190,7 +190,59 @@
         // Variables globales
         let currentCreador = null;
         let todasLasBarberias = [];
+let mobileMenuOpen = false;
 
+// ===============================
+// FUNCIONES MÓVILES
+// ===============================
+function toggleMobileMenu() {
+    const menu = document.getElementById('mobileMenu');
+    const hamburger = document.getElementById('hamburgerBtn');
+    
+    mobileMenuOpen = !mobileMenuOpen;
+    
+    if (mobileMenuOpen) {
+        menu.classList.add('show');
+        hamburger.classList.add('active');
+    } else {
+        menu.classList.remove('show');
+        hamburger.classList.remove('active');
+    }
+}
+
+function closeMobileMenu() {
+    const menu = document.getElementById('mobileMenu');
+    const hamburger = document.getElementById('hamburgerBtn');
+    
+    mobileMenuOpen = false;
+    menu.classList.remove('show');
+    hamburger.classList.remove('active');
+}
+
+function updateMobileMetrics() {
+    const totalElement = document.getElementById('totalBarberias');
+    const ingresosElement = document.getElementById('ingresosProyectados');
+    const alertasElement = document.getElementById('totalAlertas');
+    
+    if (totalElement) {
+        document.getElementById('totalBarberias-mobile').textContent = totalElement.textContent;
+    }
+    if (ingresosElement) {
+        const ingresos = ingresosElement.textContent;
+        const ingresosSinSimbolo = ingresos.replace('$', '').replace(/\./g, '');
+        const numero = parseInt(ingresosSinSimbolo);
+        if (numero >= 1000000) {
+            document.getElementById('ingresosProyectados-mobile').textContent = `$${Math.round(numero/1000000)}M`;
+        } else if (numero >= 1000) {
+            document.getElementById('ingresosProyectados-mobile').textContent = `$${Math.round(numero/1000)}K`;
+        } else {
+            document.getElementById('ingresosProyectados-mobile').textContent = ingresos;
+        }
+    }
+    if (alertasElement) {
+        document.getElementById('totalAlertas-mobile').textContent = alertasElement.textContent;
+    }
+}
         // ===============================
         // FUNCIONES DE FECHA CHILE
         // ===============================
@@ -456,7 +508,7 @@
                 mostrarAlertasRapidas(alertas);
                 
                 // Actualizar métricas móviles
-                setTimeout(() => updateMobileMetrics(), 100);asRapidas(alertas);
+                setTimeout(() => updateMobileMetrics(), 100);
                 
             } catch (error) {
                 console.error('❌ Error cargando dashboard:', error);
