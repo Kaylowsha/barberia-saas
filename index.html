@@ -2594,7 +2594,7 @@ async function filtrarProductividad(periodo) {
             .eq('barberia_id', SUPABASE_CONFIG.barberiaId)
             .gte('fecha', fechaInicioStr)
             .lte('fecha', fechaFin);
-            .eq('usuarios.activo', true)
+            .eq('usuarios.activo', true);
         
         if (error) throw error;
         
