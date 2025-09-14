@@ -220,27 +220,39 @@ function closeMobileMenu() {
 }
 
 function updateMobileMetrics() {
+    // Verificar que estamos en móvil y que existen los elementos
+    const totalMobile = document.getElementById('totalBarberias-mobile');
+    const ingresosMobile = document.getElementById('ingresosProyectados-mobile');
+    const alertasMobile = document.getElementById('totalAlertas-mobile');
+    
+    // Solo ejecutar si los elementos móviles existen
+    if (!totalMobile || !ingresosMobile || !alertasMobile) {
+        return; // Salir silenciosamente si no estamos en móvil
+    }
+    
     const totalElement = document.getElementById('totalBarberias');
     const ingresosElement = document.getElementById('ingresosProyectados');
     const alertasElement = document.getElementById('totalAlertas');
     
-    if (totalElement) {
-        document.getElementById('totalBarberias-mobile').textContent = totalElement.textContent;
+    if (totalElement && totalMobile) {
+        totalMobile.textContent = totalElement.textContent;
     }
-    if (ingresosElement) {
+    
+    if (ingresosElement && ingresosMobile) {
         const ingresos = ingresosElement.textContent;
         const ingresosSinSimbolo = ingresos.replace('$', '').replace(/\./g, '');
         const numero = parseInt(ingresosSinSimbolo);
         if (numero >= 1000000) {
-            document.getElementById('ingresosProyectados-mobile').textContent = `$${Math.round(numero/1000000)}M`;
+            ingresosMobile.textContent = `$${Math.round(numero/1000000)}M`;
         } else if (numero >= 1000) {
-            document.getElementById('ingresosProyectados-mobile').textContent = `$${Math.round(numero/1000)}K`;
+            ingresosMobile.textContent = `$${Math.round(numero/1000)}K`;
         } else {
-            document.getElementById('ingresosProyectados-mobile').textContent = ingresos;
+            ingresosMobile.textContent = ingresos;
         }
     }
-    if (alertasElement) {
-        document.getElementById('totalAlertas-mobile').textContent = alertasElement.textContent;
+    
+    if (alertasElement && alertasMobile) {
+        alertasMobile.textContent = alertasElement.textContent;
     }
 }
         // ===============================
