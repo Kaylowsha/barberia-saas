@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel del Creador - Barbería SaaS</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- Configuración -->
+    <script src="config.js"></script>
+    
+    <!-- Font Awesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* Animaciones personalizadas */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Estados de barbería */
+        .estado-pagado { border-left: 4px solid #10b981; }
+        .estado-trial { border-left: 4px solid #f59e0b; }
+        .estado-expirado { border-left: 4px solid #ef4444; }
+        .estado-bloqueado { border-left: 4px solid #6b7280; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Pantalla de Login -->
+    <div id="loginScreen" class="min-h-screen flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl p-8 max-w-md w-full fade-in">
+            <div class="text-center mb-8">
+                <i class="fas fa-crown text-6xl text-purple-600 mb-4"></i>
+                <h1 class="text-3xl font-bold text-gray-800">Panel del Creador</h1>
+                <p class="text-gray-600 mt-2">Control Total SaaS</p>
+            </div>
+            
+            <form id="loginForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-envelope mr-2"></i>Email del Creador
+                    </label>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        placeholder="creador@email.com"
+                        required
+                    >
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-lock mr-2"></i>Contraseña Maestra
+                    </label>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        placeholder="••••••••"
+                        required
+                    >
+                </div>
+                
+                <button 
+                    type="submit" 
+                    class="w-full bg-purple-600 text-white py-3 rounded-lg font-semibold hover:bg-purple-700 transition duration-200"
+                >
+                    <i class="fas fa-sign-in-alt mr-2"></i>Acceder al Panel
+                </button>
+            </form>
+            
+            <div id="loginError" class="mt-4 p-3 bg-red-100 text-red-700 rounded-lg hidden">
+                <i class="fas fa-exclamation-circle mr-2"></i>
+                <span id="loginErrorText"></span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Panel Principal (oculto inicialmente) -->
+    <div id="mainPanel" class="hidden min-h-screen">
+        <!-- Header -->
+        <header class="bg-white shadow-lg border-b-4 border-purple-500">
+            <div class="max-w-7xl mx-auto px-4 py-4">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center">
+                        <i class="fas fa-crown text-3xl text-purple-600 mr-4"></i>
+                        <div>
+                            <h1 class="text-2xl font-bold text-gray-800">Panel del Creador</h1>
+                            <p class="text-gray-600">Control Total SaaS</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center space-x-4">
+                        <span id="creadorName" class="text-gray-700 font-semibold"></span>
+                        <span class="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm">👑 Creador</span>
+                        <button onclick="logout()" class="text-red-600 hover:text-red-800">
+                            <i class="fas fa-sign-out-alt"></i> Salir
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Tabs de Navegación -->
+        <div class="bg-white border-b">
+            <div class="max-w-7xl mx-auto px-4">
+                <div class="flex space-x-1 overflow-x-auto py-2">
+                    <button 
+                        onclick="loadTab('dashboard')"
+                        id="tab-dashboard"
+                        class="px-4 py-2 rounded-t-lg font-medium text-white bg-purple-600 tab-button"
+                    >
+                        <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
+                    </button>
+                    <button 
+                        onclick="loadTab('barberias')"
+                        id="tab-barberias"
+                        class="px-4 py-2 rounded-t-lg font-medium text-gray-600 hover:text-purple-600 hover:bg-gray-50 transition-colors tab-button"
+                    >
+                        <i class="fas fa-building mr-2"></i>Barberías
+                    </button>
+                    <button 
+                        onclick="loadTab('metricas')"
+                        id="tab-metricas"
+                        class="px-4 py-2 rounded-t-lg font-medium text-gray-600 hover:text-purple-600 hover:bg-gray-50 transition-colors tab-button"
+                    >
+                        <i class="fas fa-chart-line mr-2"></i>Métricas
+                    </button>
+                    <button 
+                        onclick="loadTab('facturacion')"
+                        id="tab-facturacion"
+                        class="px-4 py-2 rounded-t-lg font-medium text-gray-600 hover:text-purple-600 hover:bg-gray-50 transition-colors tab-button"
+                    >
+                        <i class="fas fa-dollar-sign mr-2"></i>Facturación
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Contenido Principal -->
+        <div class="max-w-7xl mx-auto px-4 py-6">
+            <div id="contentArea" class="fade-in">
+                <!-- El contenido se cargará dinámicamente -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Loading Spinner -->
+    <div id="loadingSpinner" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-lg">
+            <div class="loading-spinner mx-auto"></div>
+            <p class="mt-4 text-gray-600">Procesando...</p>
+        </div>
+    </div>
+    
+    <!-- Script Principal -->
+    <script>
+        // ===============================
+        // CONFIGURACIÓN DE SUPABASE
+        // ===============================
+        const SUPABASE_URL = SUPABASE_CONFIG.url;
+        const SUPABASE_ANON_KEY = SUPABASE_CONFIG.anonKey;
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        // Variables globales
+        let currentCreador = null;
+        let todasLasBarberias = [];
+
+        // ===============================
+        // FUNCIONES DE FECHA CHILE
+        // ===============================
+        function getFechaChile() {
+            const ahora = new Date();
+            const fechaChile = new Date(ahora.toLocaleString("en-US", {timeZone: "America/Santiago"}));
+            const año = fechaChile.getFullYear();
+            const mes = String(fechaChile.getMonth() + 1).padStart(2, '0');
+            const dia = String(fechaChile.getDate()).padStart(2, '0');
+            return `${año}-${mes}-${dia}`;
+        }
+
+        function getTimestampChile() {
+            const ahora = new Date();
+            const fechaChile = new Date(ahora.toLocaleString("en-US", {timeZone: "America/Santiago"}));
+            return fechaChile.toISOString();
+        }
+
+        function calcularDiasRestantes(fechaHasta) {
+            if (!fechaHasta) return 0;
+            
+            const hoy = new Date(getFechaChile());
+            const hasta = new Date(fechaHasta);
+            const diferencia = hasta.getTime() - hoy.getTime();
+            const dias = Math.ceil(diferencia / (1000 * 3600 * 24));
+            
+            return Math.max(0, dias);
+        }
+
+        // ===============================
+        // FUNCIONES DE AUTENTICACIÓN
+        // ===============================
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            showLoading();
+            hideError();
+            
+            try {
+                // Validación específica del creador
+                if (email !== 'israelparancan.n@gmail.com' || password !== 'creador123') {
+                    showError('Acceso denegado. Solo el creador puede acceder.');
+                    hideLoading();
+                    return;
+                }
+                
+                // Login exitoso
+                currentCreador = {
+                    email: email,
+                    nombre: 'Israel Parancan',
+                    role: 'creador'
+                };
+                
+                initializePanel();
+                
+            } catch (error) {
+                console.error('Error:', error);
+                showError('Error al iniciar sesión. Intenta nuevamente.');
+            }
+            
+            hideLoading();
+        });
+        
+        function showError(message) {
+            const errorDiv = document.getElementById('loginError');
+            const errorText = document.getElementById('loginErrorText');
+            errorText.textContent = message;
+            errorDiv.classList.remove('hidden');
+        }
+        
+        function hideError() {
+            document.getElementById('loginError').classList.add('hidden');
+        }
+        
+        function showLoading() {
+            document.getElementById('loadingSpinner').classList.remove('hidden');
+        }
+        
+        function hideLoading() {
+            document.getElementById('loadingSpinner').classList.add('hidden');
+        }
+        
+        // ===============================
+        // INICIALIZACIÓN DEL PANEL
+        // ===============================
+        function initializePanel() {
+            // Ocultar login, mostrar panel
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('mainPanel').classList.remove('hidden');
+            
+            // Actualizar información del creador
+            document.getElementById('creadorName').textContent = currentCreador.nombre;
+            
+            // Cargar dashboard inicial
+            loadTab('dashboard');
+        }
+        
+        // ===============================
+        // NAVEGACIÓN ENTRE TABS
+        // ===============================
+        function loadTab(tabId) {
+            // Actualizar estado visual de tabs
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('bg-purple-600', 'text-white');
+                btn.classList.add('text-gray-600');
+            });
+            
+            const activeTab = document.getElementById(`tab-${tabId}`);
+            if (activeTab) {
+                activeTab.classList.remove('text-gray-600');
+                activeTab.classList.add('bg-purple-600', 'text-white');
+            }
+            
+            // Cargar contenido según el tab
+            switch(tabId) {
+                case 'dashboard':
+                    loadDashboard();
+                    break;
+                case 'barberias':
+                    loadGestionBarberias();
+                    break;
+                case 'metricas':
+                    loadMetricas();
+                    break;
+                case 'facturacion':
+                    loadFacturacion();
+                    break;
+                default:
+                    document.getElementById('contentArea').innerHTML = '<p>Sección en desarrollo...</p>';
+            }
+        }
+        
+        // ===============================
+        // DASHBOARD PRINCIPAL
+        // ===============================
+        async function loadDashboard() {
+            document.getElementById('contentArea').innerHTML = `
+                <div class="space-y-6">
+                    <!-- Métricas Globales -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="bg-white p-6 rounded-lg shadow border-l-4 border-blue-500">
+                            <div class="flex items-center">
+                                <div class="p-3 bg-blue-100 rounded-full">
+                                    <i class="fas fa-building text-2xl text-blue-600"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="text-lg font-semibold text-gray-700">Barberías</h3>
+                                    <div id="totalBarberias" class="text-3xl font-bold text-blue-600">-</div>
+                                    <p id="estadoBarberias" class="text-sm text-gray-500">Cargando...</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white p-6 rounded-lg shadow border-l-4 border-green-500">
+                            <div class="flex items-center">
+                                <div class="p-3 bg-green-100 rounded-full">
+                                    <i class="fas fa-dollar-sign text-2xl text-green-600"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="text-lg font-semibold text-gray-700">Ingresos Proyectados</h3>
+                                    <div id="ingresosProyectados" class="text-3xl font-bold text-green-600">-</div>
+                                    <p id="detailIngresos" class="text-sm text-gray-500">Cargando...</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white p-6 rounded-lg shadow border-l-4 border-red-500">
+                            <div class="flex items-center">
+                                <div class="p-3 bg-red-100 rounded-full">
+                                    <i class="fas fa-exclamation-triangle text-2xl text-red-600"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="text-lg font-semibold text-gray-700">Alertas</h3>
+                                    <div id="totalAlertas" class="text-3xl font-bold text-red-600">-</div>
+                                    <p id="detalleAlertas" class="text-sm text-gray-500">Cargando...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Resumen Rápido de Barberías -->
+                    <div class="bg-white rounded-lg shadow">
+                        <div class="px-6 py-4 border-b">
+                            <h3 class="text-lg font-semibold">🚨 Atención Inmediata</h3>
+                        </div>
+                        <div id="alertasRapidas" class="p-6">
+                            <div class="text-center py-8">
+                                <div class="loading-spinner mx-auto"></div>
+                                <p class="mt-4 text-gray-600">Cargando alertas...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Cargar datos del dashboard
+            await cargarDatosDashboard();
+        }
+        
+        async function cargarDatosDashboard() {
+            try {
+                console.log('🔍 Cargando datos del dashboard...');
+                
+                // Cargar todas las barberías
+                const { data: barberias, error } = await supabase
+                    .from('barberias')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+                
+                if (error) throw error;
+                
+                todasLasBarberias = barberias || [];
+                
+                // Calcular métricas
+                const totalBarberias = todasLasBarberias.length;
+                const barberias_activas = todasLasBarberias.filter(b => b.activa).length;
+                const barberias_trial = todasLasBarberias.filter(b => b.plan === 'trial' && b.activa).length;
+                const barberias_pagadas = todasLasBarberias.filter(b => b.plan === 'pagado' && b.activa).length;
+                
+                // Calcular alertas
+                const alertas = [];
+                const hoy = new Date(getFechaChile());
+                
+                todasLasBarberias.forEach(barberia => {
+                    if (barberia.plan === 'trial' && barberia.activa) {
+                        const diasRestantes = calcularDiasRestantes(barberia.trial_hasta);
+                        if (diasRestantes <= 3) {
+                            alertas.push({
+                                tipo: 'trial_venciendo',
+                                barberia: barberia.nombre,
+                                dias: diasRestantes,
+                                mensaje: `${barberia.nombre} - Trial vence en ${diasRestantes} días`
+                            });
+                        }
+                    } else if (barberia.plan === 'trial' && !barberia.activa) {
+                        alertas.push({
+                            tipo: 'trial_expirado',
+                            barberia: barberia.nombre,
+                            mensaje: `${barberia.nombre} - Trial expirado`
+                        });
+                    }
+                });
+                
+                // Actualizar métricas en UI
+                document.getElementById('totalBarberias').textContent = totalBarberias;
+                document.getElementById('estadoBarberias').textContent = 
+                    `${barberias_activas} activas • ${barberias_trial} trial • ${barberias_pagadas} pagadas`;
+                
+                const ingresosMensuales = barberias_pagadas * 15000;
+                document.getElementById('ingresosProyectados').textContent = 
+                    `$${ingresosMensuales.toLocaleString('es-CL')}`;
+                document.getElementById('detailIngresos').textContent = 
+                    `${barberias_pagadas} barberías pagando`;
+                
+                document.getElementById('totalAlertas').textContent = alertas.length;
+                document.getElementById('detalleAlertas').textContent = 
+                    alertas.length > 0 ? 'Requieren atención' : 'Todo OK';
+                
+                // Mostrar alertas rápidas
+                mostrarAlertasRapidas(alertas);
+                
+            } catch (error) {
+                console.error('❌ Error cargando dashboard:', error);
+                document.getElementById('alertasRapidas').innerHTML = 
+                    '<div class="text-red-600 text-center">❌ Error cargando datos del dashboard</div>';
+            }
+        }
+        
+        function mostrarAlertasRapidas(alertas) {
+            const container = document.getElementById('alertasRapidas');
+            
+            if (alertas.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8">
+                        <div class="text-6xl mb-4">✅</div>
+                        <h3 class="text-xl font-semibold text-green-600 mb-2">¡Todo bajo control!</h3>
+                        <p class="text-gray-600">No hay barberías que requieran atención inmediata</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '<div class="space-y-4">';
+            
+            alertas.forEach(alerta => {
+                const color = alerta.tipo === 'trial_venciendo' ? 'yellow' : 'red';
+                const icon = alerta.tipo === 'trial_venciendo' ? 'clock' : 'times-circle';
+                
+                html += `
+                    <div class="bg-${color}-50 border-l-4 border-${color}-400 p-4 rounded">
+                        <div class="flex items-center">
+                            <i class="fas fa-${icon} text-${color}-600 mr-3"></i>
+                            <div class="flex-1">
+                                <p class="font-medium text-${color}-800">${alerta.mensaje}</p>
+                            </div>
+                            <div class="space-x-2">
+                                <button class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700" onclick="gestionarBarberia('${alerta.barberia}')">
+                                    ⚙️ Gestionar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            container.innerHTML = html;
+        }
+        
+        // ===============================
+        // GESTIÓN DE BARBERÍAS
+        // ===============================
+        async function loadGestionBarberias() {
+            document.getElementById('contentArea').innerHTML = `
+                <div class="space-y-6">
+                    <!-- Header con acciones -->
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-2xl font-bold">🏢 Gestión de Barberías</h2>
+                        <button class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700" onclick="mostrarModalNuevaBarberia()">
+                            <i class="fas fa-plus mr-2"></i>Nueva Barbería
+                        </button>
+                    </div>
+                    
+                    <!-- Filtros -->
+                    <div class="bg-white p-4 rounded-lg shadow">
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Buscar:</label>
+                                <input type="text" id="buscarBarberia" placeholder="Nombre de barbería..." class="w-full px-3 py-2 border rounded-lg" onkeyup="filtrarBarberias()">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Estado:</label>
+                                <select id="filtroEstado" class="w-full px-3 py-2 border rounded-lg" onchange="filtrarBarberias()">
+                                    <option value="todas">Todas</option>
+                                    <option value="pagado">Pagadas</option>
+                                    <option value="trial">En Trial</option>
+                                    <option value="expirado">Expiradas</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Ordenar por:</label>
+                                <select id="ordenarPor" class="w-full px-3 py-2 border rounded-lg" onchange="filtrarBarberias()">
+                                    <option value="nombre">Nombre</option>
+                                    <option value="fecha">Fecha creación</option>
+                                    <option value="vencimiento">Vencimiento</option>
+                                </select>
+                            </div>
+                            <div class="flex items-end">
+                                <button class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700" onclick="cargarListaBarberias()">
+                                    <i class="fas fa-sync-alt mr-2"></i>Actualizar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Lista de Barberías -->
+                    <div id="listaBarberias">
+                        <div class="text-center py-8">
+                            <div class="loading-spinner mx-auto"></div>
+                            <p class="mt-4 text-gray-600">Cargando barberías...</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Cargar lista de barberías
+            await cargarListaBarberias();
+        }
+        
+        async function cargarListaBarberias() {
+            try {
+                console.log('🔍 Cargando lista de barberías...');
+                
+                // Mostrar loading
+                document.getElementById('listaBarberias').innerHTML = `
+                    <div class="text-center py-8">
+                        <div class="loading-spinner mx-auto"></div>
+                        <p class="mt-4 text-gray-600">Cargando barberías...</p>
+                    </div>
+                `;
+                
+                const { data: barberias, error } = await supabase
+                    .from('barberias')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+                
+                if (error) throw error;
+                
+                todasLasBarberias = barberias || [];
+                mostrarListaBarberias(todasLasBarberias);
+                
+            } catch (error) {
+                console.error('❌ Error cargando barberías:', error);
+                document.getElementById('listaBarberias').innerHTML = 
+                    '<div class="text-red-600 text-center">❌ Error cargando barberías</div>';
+            }
+        }
+        
+        function mostrarListaBarberias(barberias) {
+            const container = document.getElementById('listaBarberias');
+            
+            if (!barberias || barberias.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-12">
+                        <div class="text-6xl mb-4">🏢</div>
+                        <h3 class="text-xl font-semibold text-gray-700 mb-2">No hay barberías registradas</h3>
+                        <p class="text-gray-600 mb-4">Crea tu primera barbería para comenzar</p>
+                        <button class="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700" onclick="mostrarModalNuevaBarberia()">
+                            <i class="fas fa-plus mr-2"></i>Nueva Barbería
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '<div class="space-y-4">';
+            
+            barberias.forEach(barberia => {
+                const diasRestantes = calcularDiasRestantes(barberia.trial_hasta);
+                let estadoClass = 'estado-pagado';
+                let estadoBadge = '';
+                let estadoTexto = '';
+                let acciones = '';
+                
+                if (barberia.plan === 'pagado' && barberia.activa) {
+                    estadoClass = 'estado-pagado';
+                    estadoBadge = '<span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">💰 PAGADO</span>';
+                    estadoTexto = 'Renovación pendiente';
+                    acciones = `
+                        <button class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700" onclick="verEstadisticas('${barberia.id}')">
+                            📊 Ver Stats
+                        </button>
+                        <button class="bg-gray-600 text-white px-3 py-1 rounded text-sm hover:bg-gray-700" onclick="gestionarBarberia('${barberia.id}')">
+                            ⚙️ Gestionar
+                        </button>
+                    `;
+                } else if (barberia.plan === 'trial' && barberia.activa && diasRestantes > 0) {
+                    estadoClass = 'estado-trial';
+                    estadoBadge = '<span class="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-sm font-medium">🎁 TRIAL</span>';
+                    estadoTexto = `Vence en ${diasRestantes} días`;
+                    acciones = `
+                        <button class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700" onclick="activarPago('${barberia.id}')">
+                            💰 Activar Pago
+                        </button>
+                        <button class="bg-yellow-600 text-white px-3 py-1 rounded text-sm hover:bg-yellow-700" onclick="extenderTrial('${barberia.id}')">
+                            ⏰ Extender
+                        </button>
+                        <button class="bg-gray-600 text-white px-3 py-1 rounded text-sm hover:bg-gray-700" onclick="gestionarBarberia('${barberia.id}')">
+                            ⚙️ Gestionar
+                        </button>
+                    `;
+                } else {
+                    estadoClass = 'estado-expirado';
+                    estadoBadge = '<span class="px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm font-medium">❌ EXPIRADO</span>';
+                    estadoTexto = barberia.activa ? `Venció hace ${Math.abs(diasRestantes)} días` : 'Inactiva';
+                    acciones = `
+                        <button class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700" onclick="reactivarBarberia('${barberia.id}')">
+                            🎁 Reactivar
+                        </button>
+                        <button class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700" onclick="contactarBarberia('${barberia.id}')">
+                            📞 Contactar
+                        </button>
+                        <button class="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700" onclick="eliminarBarberia('${barberia.id}')">
+                            🗑️ Eliminar
+                        </button>
+                    `;
+                }
+                
+                const fechaCreacion = new Date(barberia.created_at).toLocaleDateString('es-CL');
+                
+                html += `
+                    <div class="bg-white rounded-lg shadow ${estadoClass} p-6">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <h3 class="text-xl font-bold text-gray-800">${barberia.nombre}</h3>
+                                    ${estadoBadge}
+                                </div>
+                                <p class="text-gray-600 mb-2">${estadoTexto}</p>
+                                <p class="text-sm text-gray-500">Creada: ${fechaCreacion}</p>
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            ${acciones}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            container.innerHTML = html;
+        }
+        
+        function filtrarBarberias() {
+            const busqueda = document.getElementById('buscarBarberia').value.toLowerCase();
+            const filtroEstado = document.getElementById('filtroEstado').value;
+            const ordenarPor = document.getElementById('ordenarPor').value;
+            
+            let barberiasFiltradas = [...todasLasBarberias];
+            
+            // Filtrar por búsqueda
+            if (busqueda) {
+                barberiasFiltradas = barberiasFiltradas.filter(b => 
+                    b.nombre.toLowerCase().includes(busqueda)
+                );
+            }
+            
+            // Filtrar por estado
+            if (filtroEstado !== 'todas') {
+                barberiasFiltradas = barberiasFiltradas.filter(b => {
+                    if (filtroEstado === 'pagado') return b.plan === 'pagado' && b.activa;
+                    if (filtroEstado === 'trial') return b.plan === 'trial' && b.activa;
+                    if (filtroEstado === 'expirado') return !b.activa || (b.plan === 'trial' && calcularDiasRestantes(b.trial_hasta) <= 0);
+                    return true;
+                });
+            }
+            
+            // Ordenar
+            barberiasFiltradas.sort((a, b) => {
+                if (ordenarPor === 'nombre') return a.nombre.localeCompare(b.nombre);
+                if (ordenarPor === 'fecha') return new Date(b.created_at) - new Date(a.created_at);
+                if (ordenarPor === 'vencimiento') {
+                    const diasA = calcularDiasRestantes(a.trial_hasta);
+                    const diasB = calcularDiasRestantes(b.trial_hasta);
+                    return diasA - diasB;
+                }
+                return 0;
+            });
+            
+            mostrarListaBarberias(barberiasFiltradas);
+        }
+        
+        // ===============================
+        // ACCIONES DE GESTIÓN
+        // ===============================
+        async function activarPago(barberiaId) {
+            if (!confirm('¿Marcar esta barbería como PAGADA?')) return;
+            
+            try {
+                showLoading();
+                
+                const { error } = await supabase
+                    .from('barberias')
+                    .update({ 
+                        plan: 'pagado',
+                        activa: true
+                    })
+                    .eq('id', barberiaId);
+                
+                if (error) throw error;
+                
+                alert('✅ Barbería marcada como PAGADA exitosamente');
+                await cargarListaBarberias();
+                
+            } catch (error) {
+                console.error('❌ Error:', error);
+                alert('❌ Error al activar pago: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        async function extenderTrial(barberiaId) {
+            const dias = prompt('¿Cuántos días extender el trial?', '7');
+            if (!dias || isNaN(dias)) return;
+            
+            try {
+                showLoading();
+                
+                // Obtener fecha actual del trial
+                const { data: barberia, error: errorGet } = await supabase
+                    .from('barberias')
+                    .select('trial_hasta')
+                    .eq('id', barberiaId)
+                    .single();
+                
+                if (errorGet) throw errorGet;
+                
+                // Calcular nueva fecha
+                const fechaActual = new Date(barberia.trial_hasta || getFechaChile());
+                fechaActual.setDate(fechaActual.getDate() + parseInt(dias));
+                const nuevaFecha = fechaActual.toISOString().split('T')[0];
+                
+                const { error } = await supabase
+                    .from('barberias')
+                    .update({ 
+                        trial_hasta: nuevaFecha,
+                        activa: true
+                    })
+                    .eq('id', barberiaId);
+                
+                if (error) throw error;
+                
+                alert(`✅ Trial extendido ${dias} días exitosamente`);
+                await cargarListaBarberias();
+                
+            } catch (error) {
+                console.error('❌ Error:', error);
+                alert('❌ Error al extender trial: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        async function reactivarBarberia(barberiaId) {
+            const dias = prompt('¿Cuántos días de trial dar?', '15');
+            if (!dias || isNaN(dias)) return;
+            
+            try {
+                showLoading();
+                
+                const fechaHasta = new Date(getFechaChile());
+                fechaHasta.setDate(fechaHasta.getDate() + parseInt(dias));
+                const nuevaFecha = fechaHasta.toISOString().split('T')[0];
+                
+                const { error } = await supabase
+                    .from('barberias')
+                    .update({ 
+                        plan: 'trial',
+                        activa: true,
+                        trial_hasta: nuevaFecha
+                    })
+                    .eq('id', barberiaId);
+                
+                if (error) throw error;
+                
+                alert(`✅ Barbería reactivada con ${dias} días de trial`);
+                await cargarListaBarberias();
+                
+            } catch (error) {
+                console.error('❌ Error:', error);
+                alert('❌ Error al reactivar: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        function contactarBarberia(barberiaId) {
+            const barberia = todasLasBarberias.find(b => b.id === barberiaId);
+            if (!barberia) return;
+            
+            const mensaje = `Hola! Tu período de prueba de ${barberia.nombre} ha finalizado. ¿Te gustaría continuar con el plan pagado? Contáctame para más información.`;
+            const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
+            window.open(url, '_blank');
+        }
+        
+        async function eliminarBarberia(barberiaId) {
+            const barberia = todasLasBarberias.find(b => b.id === barberiaId);
+            if (!barberia) return;
+            
+            if (!confirm(`¿ELIMINAR DEFINITIVAMENTE "${barberia.nombre}"?\n\n⚠️ ESTA ACCIÓN NO SE PUEDE DESHACER\n\nSe eliminarán:\n- La barbería\n- Todos sus usuarios\n- Todos sus servicios\n- Todos sus datos`)) {
+                return;
+            }
+            
+            const confirmacion = prompt('Escribe "ELIMINAR" para confirmar:');
+            if (confirmacion !== 'ELIMINAR') {
+                alert('Eliminación cancelada');
+                return;
+            }
+            
+            try {
+                showLoading();
+                
+                // Eliminar en orden: citas, adelantos, usuarios, servicios, barbería
+                const { error } = await supabase
+                    .from('barberias')
+                    .delete()
+                    .eq('id', barberiaId);
+                
+                if (error) throw error;
+                
+                alert(`✅ Barbería "${barberia.nombre}" eliminada definitivamente`);
+                await cargarListaBarberias();
+                
+            } catch (error) {
+                console.error('❌ Error:', error);
+                alert('❌ Error al eliminar: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        // ===============================
+        // MODAL NUEVA BARBERÍA
+        // ===============================
+        function mostrarModalNuevaBarberia() {
+            const modalHTML = `
+                <div id="modalNuevaBarberia" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-xl font-bold">🏢 Nueva Barbería</h3>
+                            <button onclick="cerrarModalNuevaBarberia()" class="text-gray-500 hover:text-gray-700">
+                                <i class="fas fa-times text-xl"></i>
+                            </button>
+                        </div>
+                        
+                        <form id="formNuevaBarberia">
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Nombre de la Barbería *</label>
+                                    <input type="text" id="nombreBarberia" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" placeholder="Ej: Barbería Central" required>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Plan Inicial *</label>
+                                    <select id="planInicial" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" required>
+                                        <option value="trial">🎁 Trial (15 días gratis)</option>
+                                        <option value="pagado">💰 Pagado (inmediato)</option>
+                                    </select>
+                                </div>
+                                
+                                <div id="diasTrial">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Días de Trial</label>
+                                    <input type="number" id="diasTrialInput" class="w-full px-4 py-2 border border-gray-300 rounded-lg" value="15" min="1" max="90">
+                                </div>
+                            </div>
+                            
+                            <div class="flex space-x-3 mt-6">
+                                <button type="button" onclick="cerrarModalNuevaBarberia()" class="flex-1 bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600">
+                                    Cancelar
+                                </button>
+                                <button type="submit" class="flex-1 bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700">
+                                    🏢 Crear Barbería
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            
+            // Event listeners
+            document.getElementById('planInicial').addEventListener('change', function() {
+                const diasTrialDiv = document.getElementById('diasTrial');
+                diasTrialDiv.style.display = this.value === 'trial' ? 'block' : 'none';
+            });
+            
+            document.getElementById('formNuevaBarberia').addEventListener('submit', procesarNuevaBarberia);
+        }
+        
+        function cerrarModalNuevaBarberia() {
+            const modal = document.getElementById('modalNuevaBarberia');
+            if (modal) modal.remove();
+        }
+        
+        async function procesarNuevaBarberia(e) {
+            e.preventDefault();
+            
+            const nombre = document.getElementById('nombreBarberia').value.trim();
+            const plan = document.getElementById('planInicial').value;
+            const diasTrial = parseInt(document.getElementById('diasTrialInput').value) || 15;
+            
+            if (!nombre) {
+                alert('❌ Por favor ingresa el nombre de la barbería');
+                return;
+            }
+            
+            try {
+                showLoading();
+                
+                let trialHasta = null;
+                if (plan === 'trial') {
+                    const fecha = new Date(getFechaChile());
+                    fecha.setDate(fecha.getDate() + diasTrial);
+                    trialHasta = fecha.toISOString().split('T')[0];
+                }
+                
+                const nuevaBarberia = {
+                    nombre: nombre,
+                    activa: true,
+                    plan: plan,
+                    trial_hasta: trialHasta
+                };
+                
+                const { data, error } = await supabase
+                    .from('barberias')
+                    .insert([nuevaBarberia])
+                    .select();
+                
+                if (error) throw error;
+                
+                alert(`✅ Barbería "${nombre}" creada exitosamente!\n\n${plan === 'trial' ? `🎁 Trial activado por ${diasTrial} días` : '💰 Plan pagado activo'}`);
+                
+                cerrarModalNuevaBarberia();
+                await cargarListaBarberias();
+                
+            } catch (error) {
+                console.error('❌ Error:', error);
+                alert('❌ Error al crear barbería: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        // ===============================
+        // MÉTRICAS Y ESTADÍSTICAS
+        // ===============================
+        function loadMetricas() {
+            document.getElementById('contentArea').innerHTML = `
+                <div class="space-y-6">
+                    <h2 class="text-2xl font-bold">📊 Métricas Globales</h2>
+                    
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <h3 class="text-lg font-semibold mb-4">🚀 Análisis del Negocio SaaS</h3>
+                        <div class="text-center py-12">
+                            <div class="text-6xl mb-4">📈</div>
+                            <h3 class="text-xl font-semibold text-gray-700 mb-2">Métricas Avanzadas</h3>
+                            <p class="text-gray-600">Esta funcionalidad estará disponible próximamente</p>
+                            <p class="text-sm text-gray-500 mt-2">Incluirá: Análisis de retención, LTV, churn rate, etc.</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function loadFacturacion() {
+            document.getElementById('contentArea').innerHTML = `
+                <div class="space-y-6">
+                    <h2 class="text-2xl font-bold">💰 Control de Facturación</h2>
+                    
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <h3 class="text-lg font-semibold mb-4">💳 Gestión de Pagos</h3>
+                        <div class="text-center py-12">
+                            <div class="text-6xl mb-4">💰</div>
+                            <h3 class="text-xl font-semibold text-gray-700 mb-2">Sistema de Facturación</h3>
+                            <p class="text-gray-600">Esta funcionalidad estará disponible próximamente</p>
+                            <p class="text-sm text-gray-500 mt-2">Incluirá: Historial de pagos, facturas automáticas, recordatorios</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // ===============================
+        // FUNCIONES AUXILIARES
+        // ===============================
+        function verEstadisticas(barberiaId) {
+            alert('🔄 Funcionalidad en desarrollo\n\nMostrará estadísticas detalladas de la barbería seleccionada');
+        }
+        
+        function gestionarBarberia(barberiaId) {
+            const barberia = todasLasBarberias.find(b => b.id === barberiaId);
+            if (!barberia) return;
+            
+            const opciones = [
+                '🎁 Activar Trial 15 días',
+                '⏰ Extender Trial',
+                '💰 Marcar como Pagado',
+                '🚫 Bloquear/Desbloquear',
+                '📞 Contactar por WhatsApp',
+                '🗑️ Eliminar Barbería'
+            ];
+            
+            const seleccion = prompt(`Gestión de: ${barberia.nombre}\n\nSelecciona una opción:\n${opciones.map((op, i) => `${i + 1}. ${op}`).join('\n')}`);
+            
+            if (!seleccion) return;
+            
+            const opcion = parseInt(seleccion) - 1;
+            
+            switch(opcion) {
+                case 0: // Activar Trial
+                    reactivarBarberia(barberiaId);
+                    break;
+                case 1: // Extender Trial
+                    extenderTrial(barberiaId);
+                    break;
+                case 2: // Marcar como Pagado
+                    activarPago(barberiaId);
+                    break;
+                case 3: // Bloquear/Desbloquear
+                    toggleBarberia(barberiaId);
+                    break;
+                case 4: // Contactar
+                    contactarBarberia(barberiaId);
+                    break;
+                case 5: // Eliminar
+                    eliminarBarberia(barberiaId);
+                    break;
+                default:
+                    alert('Opción no válida');
+            }
+        }
+        
+        async function toggleBarberia(barberiaId) {
+            const barberia = todasLasBarberias.find(b => b.id === barberiaId);
+            if (!barberia) return;
+            
+            const accion = barberia.activa ? 'BLOQUEAR' : 'DESBLOQUEAR';
+            const nuevoEstado = !barberia.activa;
+            
+            if (!confirm(`¿${accion} "${barberia.nombre}"?`)) return;
+            
+            try {
+                showLoading();
+                
+                const { error } = await supabase
+                    .from('barberias')
+                    .update({ activa: nuevoEstado })
+                    .eq('id', barberiaId);
+                
+                if (error) throw error;
+                
+                alert(`✅ Barbería ${accion === 'BLOQUEAR' ? 'bloqueada' : 'desbloqueada'} exitosamente`);
+                await cargarListaBarberias();
+                
+            } catch (error) {
+                console.error('❌ Error:', error);
+                alert('❌ Error al cambiar estado: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        // ===============================
+        // LOGOUT
+        // ===============================
+        function logout() {
+            currentCreador = null;
+            location.reload();
+        }
+    </script>
+</body>
+</html>
