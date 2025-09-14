@@ -455,6 +455,9 @@
                 // Mostrar alertas rápidas
                 mostrarAlertasRapidas(alertas);
                 
+                // Actualizar métricas móviles
+                setTimeout(() => updateMobileMetrics(), 100);asRapidas(alertas);
+                
             } catch (error) {
                 console.error('❌ Error cargando dashboard:', error);
                 document.getElementById('alertasRapidas').innerHTML = 
@@ -877,49 +880,96 @@
         }
         
         // ===============================
-        // MODAL NUEVA BARBERÍA
+        // MODAL NUEVA BARBERÍA (MÓVIL OPTIMIZADO)
         // ===============================
         function mostrarModalNuevaBarberia() {
+            const isMobile = window.innerWidth < 768;
+            
             const modalHTML = `
-                <div id="modalNuevaBarberia" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-xl font-bold">🏢 Nueva Barbería</h3>
-                            <button onclick="cerrarModalNuevaBarberia()" class="text-gray-500 hover:text-gray-700">
+                <div id="modalNuevaBarberia" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div class="${isMobile ? 'modal-mobile' : 'bg-white rounded-lg max-w-md w-full mx-4'}">
+                        ${isMobile ? `
+                        <!-- Header móvil full-screen -->
+                        <div class="header-mobile flex justify-between items-center">
+                            <h3 class="text-mobile-lg font-bold">🏢 Nueva Barbería</h3>
+                            <button onclick="cerrarModalNuevaBarberia()" class="btn-mobile text-gray-500 hover:text-gray-700">
                                 <i class="fas fa-times text-xl"></i>
                             </button>
                         </div>
                         
-                        <form id="formNuevaBarberia">
-                            <div class="space-y-4">
+                        <!-- Contenido móvil -->
+                        <div class="p-mobile">
+                            <form id="formNuevaBarberia" class="space-y-6">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Nombre de la Barbería *</label>
-                                    <input type="text" id="nombreBarberia" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" placeholder="Ej: Barbería Central" required>
+                                    <label class="block text-mobile-base font-medium text-gray-700 mb-3">Nombre de la Barbería *</label>
+                                    <input type="text" id="nombreBarberia" class="w-full px-4 py-4 border border-gray-300 rounded-lg text-mobile-base" placeholder="Ej: Barbería Central" required>
                                 </div>
                                 
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Plan Inicial *</label>
-                                    <select id="planInicial" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" required>
+                                    <label class="block text-mobile-base font-medium text-gray-700 mb-3">Plan Inicial *</label>
+                                    <select id="planInicial" class="w-full px-4 py-4 border border-gray-300 rounded-lg text-mobile-base" required>
                                         <option value="trial">🎁 Trial (15 días gratis)</option>
                                         <option value="pagado">💰 Pagado (inmediato)</option>
                                     </select>
                                 </div>
                                 
                                 <div id="diasTrial">
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Días de Trial</label>
-                                    <input type="number" id="diasTrialInput" class="w-full px-4 py-2 border border-gray-300 rounded-lg" value="15" min="1" max="90">
+                                    <label class="block text-mobile-base font-medium text-gray-700 mb-3">Días de Trial</label>
+                                    <input type="number" id="diasTrialInput" class="w-full px-4 py-4 border border-gray-300 rounded-lg text-mobile-base" value="15" min="1" max="90">
                                 </div>
+                                
+                                <div class="flex flex-col gap-3 pt-4">
+                                    <button type="submit" class="btn-mobile-primary">
+                                        🏢 Crear Barbería
+                                    </button>
+                                    <button type="button" onclick="cerrarModalNuevaBarberia()" class="btn-mobile-secondary">
+                                        Cancelar
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                        ` : `
+                        <!-- Modal desktop normal -->
+                        <div class="p-6">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-xl font-bold">🏢 Nueva Barbería</h3>
+                                <button onclick="cerrarModalNuevaBarberia()" class="text-gray-500 hover:text-gray-700">
+                                    <i class="fas fa-times text-xl"></i>
+                                </button>
                             </div>
                             
-                            <div class="flex space-x-3 mt-6">
-                                <button type="button" onclick="cerrarModalNuevaBarberia()" class="flex-1 bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600">
-                                    Cancelar
-                                </button>
-                                <button type="submit" class="flex-1 bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700">
-                                    🏢 Crear Barbería
-                                </button>
-                            </div>
-                        </form>
+                            <form id="formNuevaBarberia">
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Nombre de la Barbería *</label>
+                                        <input type="text" id="nombreBarberia" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" placeholder="Ej: Barbería Central" required>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Plan Inicial *</label>
+                                        <select id="planInicial" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" required>
+                                            <option value="trial">🎁 Trial (15 días gratis)</option>
+                                            <option value="pagado">💰 Pagado (inmediato)</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div id="diasTrial">
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Días de Trial</label>
+                                        <input type="number" id="diasTrialInput" class="w-full px-4 py-2 border border-gray-300 rounded-lg" value="15" min="1" max="90">
+                                    </div>
+                                </div>
+                                
+                                <div class="flex space-x-3 mt-6">
+                                    <button type="button" onclick="cerrarModalNuevaBarberia()" class="flex-1 bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600">
+                                        Cancelar
+                                    </button>
+                                    <button type="submit" class="flex-1 bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700">
+                                        🏢 Crear Barbería
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                        `}
                     </div>
                 </div>
             `;
@@ -933,6 +983,13 @@
             });
             
             document.getElementById('formNuevaBarberia').addEventListener('submit', procesarNuevaBarberia);
+            
+            // Enfocar primer campo en móvil
+            if (isMobile) {
+                setTimeout(() => {
+                    document.getElementById('nombreBarberia').focus();
+                }, 100);
+            }
         }
         
         function cerrarModalNuevaBarberia() {
