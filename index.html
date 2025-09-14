@@ -168,7 +168,29 @@
         let currentUser = null;
         let currentBarberia = null;
         let userRole = null;
-        
+
+// ===============================
+// FUNCIONES DE FECHA CHILE
+// ===============================
+function getFechaChile() {
+    const ahora = new Date();
+    const fechaChile = new Date(ahora.toLocaleString("en-US", {timeZone: "America/Santiago"}));
+    const año = fechaChile.getFullYear();
+    const mes = String(fechaChile.getMonth() + 1).padStart(2, '0');
+    const dia = String(fechaChile.getDate()).padStart(2, '0');
+    return `${año}-${mes}-${dia}`;
+}
+
+function getTimestampChile() {
+    const ahora = new Date();
+    const fechaChile = new Date(ahora.toLocaleString("en-US", {timeZone: "America/Santiago"}));
+    return fechaChile.toISOString();
+}
+
+function parseFechaChile(fechaString) {
+    const [año, mes, dia] = fechaString.split('-');
+    return new Date(parseInt(año), parseInt(mes) - 1, parseInt(dia));
+}
         // ===============================
         // FUNCIONES DE AUTENTICACIÓN
         // ===============================
@@ -486,7 +508,7 @@ const userData = {
                     monto_total: parseFloat(monto),
                     forma_pago: formaPago,
                     notas: notas || null,
-                    fecha: new Date().toISOString().split('T')[0]
+                    fecha: getFechaChile()
                 };
                 
                 console.log('Guardando servicio:', nuevoServicio);
@@ -561,7 +583,7 @@ const userData = {
     setTimeout(function() {
         const fechaInput = document.getElementById('fechaResumen');
         if (fechaInput) {
-            fechaInput.value = new Date().toLocaleDateString('sv-SE');
+            fechaInput.value = getFechaChile();
         }
         
         // Si es admin, mostrar filtro de barberos
@@ -783,7 +805,7 @@ console.log('📊 Mostrando todos los adelantos históricos del período');
         setTimeout(function() {
             var fechaInput = document.getElementById('fechaResumen');
             if (fechaInput) {
-                fechaInput.value = new Date().toLocaleDateString('sv-SE');
+                fechaInput.value = getFechaChile();
                 cargarDatosResumen();
             }
         }, 100);
@@ -971,7 +993,7 @@ const vista = document.getElementById('vistaServicios')?.value || 'hoy';
 let fechaInicio, fechaFin;
 
 if (vista === 'hoy') {
-    const hoy = new Date().toISOString().split('T')[0];
+    const hoy = getFechaChile();
     fechaInicio = hoy;
     fechaFin = hoy;
 } else if (vista === 'semana') {
@@ -1058,7 +1080,7 @@ function cambiarVistaServicios() {
         setTimeout(() => {
             const fechaInput = document.getElementById('fechaServicios');
             if (fechaInput) {
-                fechaInput.value = new Date().toLocaleDateString('sv-SE');
+                fechaInput.value = getFechaChile();
                 cargarListaServicios();
             }
         }, 100);
@@ -2020,7 +2042,7 @@ function mostrarTablaHistorial(adelantos) {
             setTimeout(() => {
                 const fechaInput = document.getElementById('fechaCierre');
                 if (fechaInput) {
-                   fechaInput.value = new Date().toLocaleDateString('sv-SE');
+                   fechaInput.value = getFechaChile();
                 }
                 cargarBarberosEnFiltroCierre();
                 cargarDatosCierre();
@@ -2101,7 +2123,7 @@ function mostrarTablaHistorial(adelantos) {
                 if (vista === 'diaria' || vista === 'semanal') {
                     const fechaInput = document.getElementById('fechaCierre');
                     if (fechaInput) {
-                        fechaInput.value = new Date().toLocaleDateString('sv-SE');
+                        fechaInput.value = getFechaChile();
                     }
                 } else if (vista === 'rango') {
                     const now = new Date();
