@@ -497,19 +497,20 @@ const userData = {
             }
             
             try {
-                const nuevoServicio = {
-                    barberia_id: SUPABASE_CONFIG.barberiaId,
-                    realizado_por_id: currentUser.id,
-                    realizado_por_nombre: currentUser.nombre,
-                    servicio_principal_id: parseInt(servicioPrincipal.value),
-                    servicio_principal_nombre: servicioPrincipal.options[servicioPrincipal.selectedIndex].text,
-                    servicio_adicional_id: servicioAdicional.value ? parseInt(servicioAdicional.value) : null,
-                    servicio_adicional_nombre: servicioAdicional.value ? servicioAdicional.options[servicioAdicional.selectedIndex].text : null,
-                    monto_total: parseFloat(monto),
-                    forma_pago: formaPago,
-                    notas: notas || null,
-                    fecha: getFechaChile()
-                };
+                   const nuevoServicio = {
+    barberia_id: SUPABASE_CONFIG.barberiaId,
+    realizado_por_id: currentUser.id,
+    realizado_por_nombre: currentUser.nombre,
+    servicio_principal_id: parseInt(servicioPrincipal.value),
+    servicio_principal_nombre: servicioPrincipal.options[servicioPrincipal.selectedIndex].text,
+    servicio_adicional_id: servicioAdicional.value ? parseInt(servicioAdicional.value) : null,
+    servicio_adicional_nombre: servicioAdicional.value ? servicioAdicional.options[servicioAdicional.selectedIndex].text : null,
+    monto_total: parseFloat(monto),
+    forma_pago: formaPago,
+    notas: notas || null,
+    fecha: getFechaChile(),
+    created_at: getTimestampChile()
+};
                 
                 console.log('Guardando servicio:', nuevoServicio);
                 
